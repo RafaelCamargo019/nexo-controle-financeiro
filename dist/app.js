@@ -9,6 +9,7 @@ const baseTransactions=[
 {id:8,description:'Cinema',category:'Lazer',date:'2026-09-14',type:'expense',amount:76,account:'Inter'}];
 let transactions=JSON.parse(localStorage.getItem('nexo-flow-transactions')||'null')||baseTransactions;
 let privateMode=false,lastAdded=null,selectedBank='';
+let authMode='login';
 const brl=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
 const dateFormat=new Intl.DateTimeFormat('pt-BR',{day:'2-digit',month:'short',year:'numeric'});
 const monthData=[{m:'ABR',i:6100,e:4200},{m:'MAI',i:6800,e:4600},{m:'JUN',i:6400,e:4100},{m:'JUL',i:7300,e:4800},{m:'AGO',i:6900,e:4500},{m:'SET',i:8550,e:0}];
@@ -18,6 +19,38 @@ function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',
 function money(n){return privateMode?'R$ ••••':brl.format(n);}
 function totals(){const income=transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);const expense=transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);return{income,expense,balance:income-expense};}
 function save(){localStorage.setItem('nexo-flow-transactions',JSON.stringify(transactions));}
+async function hashPassword(value){
+  const bytes=new TextEncoder().encode(value);
+  const digest=await crypto.subtle.digest('SHA-256',bytes);
+  return [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function enterApp(profile){
+  const name=profile.name||'Usuário Nexo';
+  document.querySelector('#loginPage').hidden=true;
+  document.querySelector('#appShell').classList.remove('locked');
+  document.querySelector('#userName').textContent=name;
+  document.querySelector('#userEmail').textContent=profile.email||'Conta local';
+  document.querySelector('#userInitials').textContent=name.split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();
+  document.querySelector('#pageTitle').textContent=`Olá, ${name.split(' ')[0]} 👋`;
+}
+function showLogin(){
+  document.querySelector('#appShell').classList.add('locked');
+  document.querySelector('#loginPage').hidden=false;
+  document.querySelector('#authPassword').value='';
+  document.querySelector('#authError').textContent='';
+}
+function setAuthMode(mode){
+  authMode=mode;const register=mode==='register';
+  document.querySelector('#nameField').hidden=!register;
+  document.querySelector('#authName').required=register;
+  document.querySelector('#authKicker').textContent=register?'PRIMEIRO ACESSO':'BEM-VINDA DE VOLTA';
+  document.querySelector('#authTitle').textContent=register?'Crie sua conta local':'Entre na sua conta';
+  document.querySelector('#authDescription').textContent=register?'Seus dados ficam somente neste navegador.':'Acesse seu painel financeiro pessoal.';
+  document.querySelector('#authSubmit').textContent=register?'Criar conta':'Entrar';
+  document.querySelector('#switchText').textContent=register?'Já possui uma conta?':'Ainda não tem uma conta?';
+  document.querySelector('#authSwitch').textContent=register?'Entrar':'Criar conta';
+  document.querySelector('#authError').textContent='';
+}
 function renderAll(){const t=totals();document.querySelector('#balanceValue').textContent=money(t.balance);document.querySelector('#incomeValue').textContent=money(t.income);document.querySelector('#expenseValue').textContent=money(t.expense);document.querySelector('#savedValue').textContent=money(Math.max(0,t.balance));monthData[5].e=t.expense;renderChart();renderTable();renderBudgets();document.querySelectorAll('.private-value').forEach(el=>{if(!el.dataset.real)el.dataset.real=el.textContent;if(privateMode&&!['balanceValue','incomeValue','expenseValue','savedValue'].includes(el.id))el.textContent='R$ ••••';else if(!privateMode&&el.dataset.real)el.textContent=el.dataset.real;});}
 function renderChart(){const count=Number(document.querySelector('#chartPeriod').value);const data=monthData.slice(-count);const max=Math.max(...data.flatMap(x=>[x.i,x.e]),1);document.querySelector('#cashChart').innerHTML=data.map(x=>`<div class="bar-pair"><i class="income" style="height:${x.i/max*92}%" title="Receitas ${brl.format(x.i)}"></i><i class="expense" style="height:${x.e/max*92}%" title="Despesas ${brl.format(x.e)}"></i><span>${x.m}</span></div>`).join('');}
 function renderTable(){const q=document.querySelector('#searchInput').value.toLowerCase(),type=document.querySelector('#typeFilter').value,cat=document.querySelector('#categoryFilter').value;const list=[...transactions].sort((a,b)=>b.date.localeCompare(a.date)).filter(t=>(t.description.toLowerCase().includes(q)||t.category.toLowerCase().includes(q))&&(type==='all'||t.type===type)&&(cat==='all'||t.category===cat));document.querySelector('#transactionRows').innerHTML=list.map(t=>`<tr><td><div class="transaction-name"><i>${categoryIcons[t.category]||'○'}</i><span><strong>${esc(t.description)}</strong><small>${t.type==='income'?'Recebimento':'Pagamento'}</small></span></div></td><td>${t.category}</td><td>${dateFormat.format(new Date(t.date+'T12:00:00'))}</td><td>${t.account||'Manual'}</td><td class="${t.type==='income'?'amount-income':'amount-expense'}">${privateMode?'R$ ••••':`${t.type==='income'?'+':'−'} ${brl.format(t.amount)}`}</td><td><button class="delete" data-delete="${t.id}" aria-label="Excluir ${esc(t.description)}">×</button></td></tr>`).join('');document.querySelector('#emptyState').hidden=list.length>0;}
@@ -26,6 +59,20 @@ function showView(name){document.querySelectorAll('.view').forEach(v=>v.classLis
 document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
 document.querySelectorAll('[data-view-link]').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.viewLink)));
 document.querySelector('#menuBtn').addEventListener('click',()=>document.querySelector('#sidebar').classList.toggle('open'));
+document.querySelector('#authSwitch').addEventListener('click',()=>setAuthMode(authMode==='login'?'register':'login'));
+document.querySelector('#showPassword').addEventListener('click',()=>{const input=document.querySelector('#authPassword');input.type=input.type==='password'?'text':'password';});
+document.querySelector('#forgotBtn').addEventListener('click',()=>{document.querySelector('#authError').textContent='Neste protótipo, crie uma nova conta ou use a demonstração.';});
+document.querySelector('#loginForm').addEventListener('submit',async e=>{
+  e.preventDefault();const email=document.querySelector('#authEmail').value.trim().toLowerCase();const password=document.querySelector('#authPassword').value;const name=document.querySelector('#authName').value.trim();const error=document.querySelector('#authError');const submit=document.querySelector('#authSubmit');
+  if(!email.includes('@')||password.length<4||(authMode==='register'&&name.length<2)){error.textContent='Confira o nome, o e-mail e a senha de pelo menos 4 caracteres.';return;}
+  submit.disabled=true;const passwordHash=await hashPassword(password);submit.disabled=false;
+  if(authMode==='register'){const profile={name,email,passwordHash};localStorage.setItem('nexo-flow-profile',JSON.stringify(profile));localStorage.setItem('nexo-flow-session','active');enterApp(profile);showToast('Conta criada','Os dados foram salvos neste navegador.');return;}
+  const profile=JSON.parse(localStorage.getItem('nexo-flow-profile')||'null');
+  if(!profile||profile.email!==email||profile.passwordHash!==passwordHash){error.textContent='E-mail ou senha incorretos. Você também pode acessar a demonstração.';return;}
+  localStorage.setItem('nexo-flow-session','active');enterApp(profile);
+});
+document.querySelector('#demoLogin').addEventListener('click',async()=>{const profile={name:'Marina Costa',email:'demo@nexoflow.com',passwordHash:await hashPassword('1234')};localStorage.setItem('nexo-flow-profile',JSON.stringify(profile));localStorage.setItem('nexo-flow-session','active');enterApp(profile);});
+document.querySelector('#logoutBtn').addEventListener('click',()=>{localStorage.removeItem('nexo-flow-session');showLogin();setAuthMode('login');});
 document.querySelector('#privacyBtn').addEventListener('click',()=>{privateMode=!privateMode;document.querySelector('#privacyBtn').textContent=privateMode?'◌':'◉';renderAll();});
 document.querySelector('#chartPeriod').addEventListener('change',renderChart);
 ['searchInput','typeFilter','categoryFilter'].forEach(id=>document.querySelector(`#${id}`).addEventListener(id==='searchInput'?'input':'change',renderTable));
@@ -54,3 +101,4 @@ function askAI(q){if(!q.trim())return;const messages=document.querySelector('#me
 document.querySelectorAll('[data-question]').forEach(b=>b.addEventListener('click',()=>askAI(b.dataset.question)));document.querySelector('#chatForm').addEventListener('submit',e=>{e.preventDefault();askAI(document.querySelector('#chatInput').value);document.querySelector('#chatInput').value='';});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeTransaction();closeBank();}});
 const catSelect=document.querySelector('#categoryFilter');[...new Set(transactions.map(t=>t.category))].sort().forEach(c=>catSelect.insertAdjacentHTML('beforeend',`<option>${c}</option>`));renderAll();
+const savedProfile=JSON.parse(localStorage.getItem('nexo-flow-profile')||'null');if(localStorage.getItem('nexo-flow-session')==='active'&&savedProfile)enterApp(savedProfile);else showLogin();

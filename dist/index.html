@@ -11,7 +11,38 @@
 </head>
 <body>
   <a class="skip" href="#main">Pular para o conteúdo</a>
-  <div class="app">
+  <section class="login-page" id="loginPage">
+    <div class="login-showcase">
+      <div class="login-brand"><span class="logo">N</span><span>Nexo <b>Flow</b></span></div>
+      <div class="login-copy">
+        <span class="login-kicker">CONTROLE FINANCEIRO PESSOAL</span>
+        <h1>Veja sua vida financeira por inteiro.</h1>
+        <p>Contas, planejamento e orientações inteligentes em uma experiência simples.</p>
+      </div>
+      <div class="login-preview">
+        <span>Saldo consolidado</span><strong>R$ 5.677,45</strong><small>3 bancos conectados via Open Finance</small>
+        <div><i style="height:35%"></i><i style="height:52%"></i><i style="height:44%"></i><i style="height:72%"></i><i style="height:63%"></i><i style="height:90%"></i></div>
+      </div>
+      <small class="login-note">Protótipo acadêmico. Nenhum dado bancário real é utilizado.</small>
+    </div>
+    <div class="login-form-area">
+      <form class="login-form" id="loginForm">
+        <span class="mobile-login-brand"><i>N</i> Nexo Flow</span>
+        <small id="authKicker">BEM-VINDA DE VOLTA</small>
+        <h2 id="authTitle">Entre na sua conta</h2>
+        <p id="authDescription">Acesse seu painel financeiro pessoal.</p>
+        <label id="nameField" hidden>Nome completo<input id="authName" autocomplete="name" placeholder="Como devemos chamar você?"></label>
+        <label>E-mail<input id="authEmail" type="email" autocomplete="email" placeholder="seuemail@exemplo.com" required></label>
+        <label>Senha<div class="password-field"><input id="authPassword" type="password" autocomplete="current-password" placeholder="Mínimo de 4 caracteres" required><button id="showPassword" type="button" aria-label="Mostrar senha">◉</button></div></label>
+        <div class="login-options"><label><input type="checkbox" checked> Manter conectado</label><button type="button" id="forgotBtn">Esqueci a senha</button></div>
+        <p class="auth-error" id="authError" role="alert"></p>
+        <button class="login-submit" type="submit" id="authSubmit">Entrar</button>
+        <button class="demo-login" type="button" id="demoLogin">Acessar demonstração</button>
+        <p class="auth-switch"><span id="switchText">Ainda não tem uma conta?</span> <button type="button" id="authSwitch">Criar conta</button></p>
+      </form>
+    </div>
+  </section>
+  <div class="app locked" id="appShell">
     <aside class="sidebar" id="sidebar">
       <div class="brand"><span class="logo">N</span><span>Nexo <b>Flow</b></span></div>
       <nav aria-label="Navegação principal">
@@ -27,7 +58,7 @@
         <span><strong>Open Finance</strong><small>3 instituições conectadas</small></span>
         <b>＋</b>
       </button>
-      <div class="user-card"><span class="avatar">MC</span><span><strong>Marina Costa</strong><small>Plano Essencial</small></span><button aria-label="Configurações">•••</button></div>
+      <div class="user-card"><span class="avatar" id="userInitials">MC</span><span><strong id="userName">Marina Costa</strong><small id="userEmail">Plano Essencial</small></span><button id="logoutBtn" aria-label="Sair da conta" title="Sair">↪</button></div>
     </aside>
 
     <main id="main">
