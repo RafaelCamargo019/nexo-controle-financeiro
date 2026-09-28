@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Nexo - painel pessoal para organizar receitas, despesas, metas e orçamentos.">
+  <meta name="theme-color" content="#09111f">
+  <title>Nexo | Controle financeiro</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23b8f548'/%3E%3Cpath d='M18 42V22h8l12 12V22h8v20h-8L26 30v12z' fill='%2309111f'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Navegação principal">
+      <div class="brand"><span class="brand-mark">N</span><span>Nexo</span></div>
+      <nav class="nav-list">
+        <button class="nav-item active" data-view="inicio" aria-current="page">
+          <span class="nav-icon">⌂</span><span>Visão geral</span>
+        </button>
+        <button class="nav-item" data-view="transacoes">
+          <span class="nav-icon">↕</span><span>Transações</span>
+        </button>
+        <button class="nav-item" data-view="planejamento">
+          <span class="nav-icon">◎</span><span>Planejamento</span>
+        </button>
+      </nav>
+      <div class="sidebar-card">
+        <span class="eyebrow">Saúde financeira</span>
+        <strong id="healthScore">82 pontos</strong>
+        <div class="mini-progress"><span style="width:82%"></span></div>
+        <p>Seu orçamento está equilibrado.</p>
+      </div>
+      <div class="profile">
+        <div class="avatar" aria-hidden="true">MS</div>
+        <div><strong>Marina Silva</strong><span>Conta pessoal</span></div>
+        <button class="icon-btn" aria-label="Abrir configurações">•••</button>
+      </div>
+    </aside>
+
+    <main id="conteudo" class="main">
+      <header class="topbar">
+        <button id="menuBtn" class="icon-btn menu-btn" aria-label="Abrir menu" aria-expanded="false">☰</button>
+        <div>
+          <p class="eyebrow" id="todayLabel">SEGUNDA, 28 DE SETEMBRO</p>
+          <h1 id="pageTitle">Seu dinheiro, com clareza.</h1>
+        </div>
+        <div class="top-actions">
+          <button id="privacyBtn" class="control-btn" aria-pressed="false" title="Ocultar valores"><span>◉</span><span class="desktop-label">Ocultar valores</span></button>
+          <button id="themeBtn" class="icon-btn" aria-label="Alternar tema" title="Alternar tema">☼</button>
+          <button class="primary-btn open-transaction"><span>＋</span> Novo lançamento</button>
+        </div>
+      </header>
+
+      <section class="view active" id="view-inicio" aria-labelledby="pageTitle">
+        <div class="balance-grid">
+          <article class="balance-card featured">
+            <div class="card-top"><span>Saldo disponível</span><span class="chip positive">↑ 8,4%</span></div>
+            <strong class="money hero-money" data-value id="balanceValue">R$ 0,00</strong>
+            <div class="balance-meta"><span>Última atualização: agora</span><span class="trend-label">+ R$ 1.240 este mês</span></div>
+            <div class="decor-line" aria-hidden="true"></div>
+          </article>
+          <article class="metric-card">
+            <div class="metric-icon income">↙</div>
+            <div><span>Receitas</span><strong class="money" data-value id="incomeValue">R$ 0,00</strong><small class="good">+12% vs. mês anterior</small></div>
+          </article>
+          <article class="metric-card">
+            <div class="metric-icon expense">↗</div>
+            <div><span>Despesas</span><strong class="money" data-value id="expenseValue">R$ 0,00</strong><small>62% da sua receita</small></div>
+          </article>
+        </div>
+
+        <div class="dashboard-grid">
+          <article class="panel cashflow-panel">
+            <div class="panel-head">
+              <div><span class="eyebrow">FLUXO DE CAIXA</span><h2>Entradas e saídas</h2></div>
+              <select id="periodSelect" aria-label="Período do gráfico">
+                <option value="6">Últimos 6 meses</option>
+                <option value="3">Últimos 3 meses</option>
+              </select>
+            </div>
+            <div class="chart-legend"><span><i class="dot income-dot"></i>Receitas</span><span><i class="dot expense-dot"></i>Despesas</span></div>
+            <div id="cashChart" class="cash-chart" role="img" aria-label="Gráfico comparando receitas e despesas"></div>
+          </article>
+
+          <article class="panel budget-panel">
+            <div class="panel-head">
+              <div><span class="eyebrow">ORÇAMENTO</span><h2>Limite mensal</h2></div>
+              <span class="budget-status">No ritmo</span>
+            </div>
+            <div class="budget-ring-wrap">
+              <div class="budget-ring" id="budgetRing"><div><strong id="budgetPercent">0%</strong><span>utilizado</span></div></div>
+              <div class="budget-summary"><span>Gasto até agora</span><strong class="money" data-value id="budgetSpent">R$ 0</strong><small>de R$ 6.000</small></div>
+            </div>
+            <div class="budget-alert"><span>✦</span><p><strong>Boa margem!</strong><br>Você pode gastar R$ 120 por dia até o fim do mês.</p></div>
+          </article>
+        </div>
+
+        <div class="lower-grid">
+          <article class="panel transactions-panel">
+            <div class="panel-head"><div><span class="eyebrow">ATIVIDADE RECENTE</span><h2>Últimas transações</h2></div><button class="text-btn" data-go="transacoes">Ver todas →</button></div>
+            <div id="recentTransactions" class="transaction-list"></div>
+          </article>
+          <article class="panel goal-panel">
+            <div class="panel-head"><div><span class="eyebrow">META EM DESTAQUE</span><h2>Reserva de emergência</h2></div><span class="goal-icon">⌁</span></div>
+            <p>Uma tranquilidade de 6 meses, construída aos poucos.</p>
+            <div class="goal-values"><strong class="money" data-value id="goalCurrent">R$ 8.400</strong><span>de R$ 15.000</span></div>
+            <div class="goal-progress"><span id="goalBar" style="width:56%"></span></div>
+            <div class="goal-footer"><span>56% concluído</span><span>Faltam R$ 6.600</span></div>
+            <button id="goalBtn" class="secondary-btn">Adicionar R$ 100 à meta</button>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="view-transacoes" aria-labelledby="transactionsTitle">
+        <div class="section-intro"><div><span class="eyebrow">HISTÓRICO</span><h2 id="transactionsTitle">Todas as transações</h2><p>Encontre e organize cada movimento do seu dinheiro.</p></div><button class="primary-btn open-transaction">＋ Novo lançamento</button></div>
+        <div class="panel filters-panel">
+          <label class="search-field"><span>⌕</span><input id="searchInput" type="search" placeholder="Buscar por descrição ou categoria"></label>
+          <select id="typeFilter" aria-label="Filtrar por tipo"><option value="all">Todos os tipos</option><option value="income">Receitas</option><option value="expense">Despesas</option></select>
+          <select id="categoryFilter" aria-label="Filtrar por categoria"><option value="all">Todas as categorias</option></select>
+          <button id="exportBtn" class="control-btn">⇩ Exportar CSV</button>
+        </div>
+        <div class="panel table-panel">
+          <div class="table-wrap"><table><thead><tr><th>Descrição</th><th>Categoria</th><th>Data</th><th>Tipo</th><th class="align-right">Valor</th><th><span class="sr-only">Ações</span></th></tr></thead><tbody id="transactionsTable"></tbody></table></div>
+          <div id="emptyState" class="empty-state" hidden><strong>Nenhuma transação encontrada</strong><span>Tente alterar os filtros ou registre um novo lançamento.</span></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-planejamento" aria-labelledby="planningTitle">
+        <div class="section-intro"><div><span class="eyebrow">PRÓXIMOS PASSOS</span><h2 id="planningTitle">Planejamento financeiro</h2><p>Transforme objetivos em ações simples e mensuráveis.</p></div><span class="plan-date">Setembro · 2026</span></div>
+        <div class="planning-grid">
+          <article class="panel planning-hero"><span class="eyebrow">PREVISÃO DO MÊS</span><h3>Você deve fechar setembro no positivo.</h3><strong class="money" data-value id="forecastValue">+ R$ 1.240</strong><p>Se mantiver o ritmo atual, 18% da renda poderá ser direcionada para suas metas.</p><div class="forecast-bars"><span style="height:48%"></span><span style="height:62%"></span><span style="height:54%"></span><span style="height:76%"></span><span style="height:68%"></span><span class="current" style="height:88%"></span></div></article>
+          <article class="panel category-panel"><div class="panel-head"><div><span class="eyebrow">POR CATEGORIA</span><h2>Orçamentos</h2></div><span>Setembro</span></div><div id="categoryBudgets" class="category-budgets"></div></article>
+          <article class="panel goals-panel"><div class="panel-head"><div><span class="eyebrow">OBJETIVOS</span><h2>Minhas metas</h2></div><button class="text-btn" id="newGoalBtn">＋ Nova meta</button></div><div class="goal-item"><span class="goal-emoji">🛡</span><div><strong>Reserva de emergência</strong><span>R$ 8.400 de R$ 15.000</span><div class="small-progress"><i style="width:56%"></i></div></div><b>56%</b></div><div class="goal-item"><span class="goal-emoji">✈</span><div><strong>Viagem de férias</strong><span>R$ 2.150 de R$ 5.000</span><div class="small-progress"><i style="width:43%"></i></div></div><b>43%</b></div></article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="transactionDialog" class="dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="dialogTitle" hidden>
+    <form id="transactionForm" novalidate>
+      <div class="dialog-head"><div><span class="eyebrow">NOVO REGISTRO</span><h2 id="dialogTitle">Adicionar lançamento</h2></div><button type="button" class="icon-btn close-dialog" aria-label="Fechar">×</button></div>
+      <div class="type-switch" role="group" aria-label="Tipo de lançamento"><button type="button" class="active" data-type="expense">Despesa</button><button type="button" data-type="income">Receita</button></div>
+      <input type="hidden" id="transactionType" value="expense">
+      <label>Descrição<input id="descriptionInput" required maxlength="40" placeholder="Ex.: Supermercado"></label>
+      <div class="form-row"><label>Valor (R$)<input id="amountInput" required inputmode="decimal" placeholder="0,00"></label><label>Data<input id="dateInput" required type="date"></label></div>
+      <label>Categoria<select id="formCategory"><option>Alimentação</option><option>Moradia</option><option>Transporte</option><option>Lazer</option><option>Saúde</option><option>Educação</option><option>Salário</option><option>Freelance</option><option>Outros</option></select></label>
+      <p id="formError" class="form-error" role="alert"></p>
+      <div class="dialog-actions"><button type="button" class="secondary-btn close-dialog">Cancelar</button><button type="submit" class="primary-btn">Salvar lançamento</button></div>
+    </form>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"><span>✓</span><p><strong>Lançamento salvo</strong><small>Seu saldo foi atualizado.</small></p><button id="undoBtn" class="text-btn">Desfazer</button></div>
+  <script src="app.js"></script>
+</body>
+</html>
