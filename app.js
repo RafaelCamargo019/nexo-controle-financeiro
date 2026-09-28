@@ -1,101 +1,56 @@
-const initialTransactions = [
-  {id:1,description:'Salário',category:'Salário',date:'2026-09-05',type:'income',amount:7200},
-  {id:2,description:'Projeto freelance',category:'Freelance',date:'2026-09-18',type:'income',amount:1350},
-  {id:3,description:'Aluguel',category:'Moradia',date:'2026-09-08',type:'expense',amount:1850},
-  {id:4,description:'Supermercado',category:'Alimentação',date:'2026-09-23',type:'expense',amount:486.75},
-  {id:5,description:'Internet residencial',category:'Moradia',date:'2026-09-21',type:'expense',amount:119.90},
-  {id:6,description:'Academia',category:'Saúde',date:'2026-09-20',type:'expense',amount:99.90},
-  {id:7,description:'Combustível',category:'Transporte',date:'2026-09-17',type:'expense',amount:240},
-  {id:8,description:'Cinema',category:'Lazer',date:'2026-09-14',type:'expense',amount:76}
-];
-
-let transactions = JSON.parse(localStorage.getItem('nexo-transactions') || 'null') || initialTransactions;
-let privacy = false;
-let lastAdded = null;
-const currency = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
-const shortCurrency = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0});
-const dateFmt = new Intl.DateTimeFormat('pt-BR',{day:'2-digit',month:'short',year:'numeric'});
-const icons = {'Salário':'▣','Freelance':'✦','Moradia':'⌂','Alimentação':'◇','Saúde':'＋','Transporte':'➜','Lazer':'☆','Educação':'▤','Outros':'○'};
-const categoryLimits = {Moradia:2200,Alimentação:1000,Transporte:600,Lazer:450,Saúde:400,Educação:500,Outros:350};
-const months = [{name:'Abr',income:6100,expense:4400},{name:'Mai',income:6800,expense:4100},{name:'Jun',income:6400,expense:4650},{name:'Jul',income:7300,expense:4200},{name:'Ago',income:6900,expense:4900},{name:'Set',income:8550,expense:0}];
-
-function save(){localStorage.setItem('nexo-transactions',JSON.stringify(transactions));}
-function money(value){return privacy?'R$ ••••':currency.format(value);}
-function totals(){
-  const income=transactions.filter(t=>t.type==='income').reduce((a,t)=>a+t.amount,0);
-  const expense=transactions.filter(t=>t.type==='expense').reduce((a,t)=>a+t.amount,0);
-  return {income,expense,balance:income-expense};
-}
-function updateDashboard(){
-  const {income,expense,balance}=totals();
-  document.querySelector('#balanceValue').textContent=money(balance);
-  document.querySelector('#incomeValue').textContent=money(income);
-  document.querySelector('#expenseValue').textContent=money(expense);
-  document.querySelector('#budgetSpent').textContent=privacy?'R$ ••••':shortCurrency.format(expense);
-  document.querySelector('#forecastValue').textContent=privacy?'+ R$ ••••':`${balance>=0?'+ ':''}${shortCurrency.format(balance)}`;
-  const percent=Math.min(Math.round(expense/6000*100),100);
-  document.querySelector('#budgetPercent').textContent=`${percent}%`;
-  document.querySelector('#budgetRing').style.background=`conic-gradient(var(--lime) ${percent*3.6}deg,#243650 0deg)`;
-  months[5].expense=expense;
-  renderChart();renderRecent();renderTable();renderCategoryBudgets();
-}
-function renderChart(){
-  const count=Number(document.querySelector('#periodSelect').value);
-  const data=months.slice(-count);const max=Math.max(...data.flatMap(m=>[m.income,m.expense]),1);
-  document.querySelector('#cashChart').innerHTML=data.map(m=>`<div class="bar-group"><i class="bar income" style="height:${m.income/max*88}%" title="Receitas em ${m.name}: ${currency.format(m.income)}"></i><i class="bar expense" style="height:${m.expense/max*88}%" title="Despesas em ${m.name}: ${currency.format(m.expense)}"></i><span class="bar-label">${m.name}</span></div>`).join('');
-}
-function transactionRow(t,table=false){
-  const sign=t.type==='income'?'+':'−';
-  if(table)return `<tr><td><strong>${escapeHtml(t.description)}</strong></td><td>${t.category}</td><td>${dateFmt.format(new Date(t.date+'T12:00:00'))}</td><td><span class="type-badge ${t.type}">${t.type==='income'?'Receita':'Despesa'}</span></td><td class="align-right ${t.type}"><strong>${privacy?'R$ ••••':`${sign} ${currency.format(t.amount)}`}</strong></td><td><button class="delete-btn" data-delete="${t.id}" aria-label="Excluir ${escapeHtml(t.description)}">×</button></td></tr>`;
-  return `<div class="transaction-item"><span class="transaction-icon">${icons[t.category]||'○'}</span><div><strong>${escapeHtml(t.description)}</strong><span>${t.category} · ${dateFmt.format(new Date(t.date+'T12:00:00'))}</span></div><div class="transaction-amount ${t.type}"><strong>${privacy?'R$ ••••':`${sign} ${currency.format(t.amount)}`}</strong><span>${t.type==='income'?'Recebido':'Pago'}</span></div></div>`;
-}
-function renderRecent(){document.querySelector('#recentTransactions').innerHTML=[...transactions].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4).map(t=>transactionRow(t)).join('');}
-function renderTable(){
-  const q=document.querySelector('#searchInput').value.toLowerCase();const type=document.querySelector('#typeFilter').value;const category=document.querySelector('#categoryFilter').value;
-  const filtered=[...transactions].sort((a,b)=>b.date.localeCompare(a.date)).filter(t=>(t.description.toLowerCase().includes(q)||t.category.toLowerCase().includes(q))&&(type==='all'||t.type===type)&&(category==='all'||t.category===category));
-  document.querySelector('#transactionsTable').innerHTML=filtered.map(t=>transactionRow(t,true)).join('');
-  document.querySelector('#emptyState').hidden=filtered.length>0;
-}
-function renderCategoryBudgets(){
-  const expenses=transactions.filter(t=>t.type==='expense').reduce((acc,t)=>{acc[t.category]=(acc[t.category]||0)+t.amount;return acc;},{});
-  document.querySelector('#categoryBudgets').innerHTML=Object.entries(categoryLimits).slice(0,5).map(([cat,limit])=>{const spent=expenses[cat]||0;const pct=Math.min(spent/limit*100,100);return `<div class="category-row ${spent>limit?'over':''}"><div><span>${icons[cat]}</span><strong>${cat}</strong></div><small>${money(spent)} / ${privacy?'••••':shortCurrency.format(limit)}</small><div class="small-progress"><i style="width:${pct}%"></i></div></div>`}).join('');
-}
-function escapeHtml(s){return s.replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
-function showView(name){
-  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===`view-${name}`));
-  document.querySelectorAll('.nav-item').forEach(b=>{const active=b.dataset.view===name;b.classList.toggle('active',active);active?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current');});
-  const titles={inicio:'Seu dinheiro, com clareza.',transacoes:'Movimentos sob controle.',planejamento:'Planos que cabem na vida.'};document.querySelector('#pageTitle').textContent=titles[name];
-  document.querySelector('#sidebar').classList.remove('open');document.querySelector('#menuBtn').setAttribute('aria-expanded','false');window.scrollTo({top:0,behavior:'smooth'});
-}
-function showToast(title='Lançamento salvo',message='Seu saldo foi atualizado.'){
-  const toast=document.querySelector('#toast');toast.querySelector('strong').textContent=title;toast.querySelector('small').textContent=message;toast.classList.add('show');clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>toast.classList.remove('show'),4500);
-}
-function populateCategories(){const select=document.querySelector('#categoryFilter');[...new Set(transactions.map(t=>t.category))].sort().forEach(c=>select.insertAdjacentHTML('beforeend',`<option>${c}</option>`));}
-
-document.querySelectorAll('.nav-item').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
-document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.go)));
-document.querySelector('#menuBtn').addEventListener('click',e=>{const side=document.querySelector('#sidebar');side.classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',side.classList.contains('open'));});
-document.querySelector('#privacyBtn').addEventListener('click',e=>{privacy=!privacy;e.currentTarget.setAttribute('aria-pressed',privacy);e.currentTarget.querySelector('.desktop-label').textContent=privacy?'Mostrar valores':'Ocultar valores';updateDashboard();});
-document.querySelector('#themeBtn').addEventListener('click',()=>{document.body.classList.toggle('light');document.querySelector('#themeBtn').textContent=document.body.classList.contains('light')?'☾':'☼';});
-document.querySelector('#periodSelect').addEventListener('change',renderChart);
+const baseTransactions=[
+{id:1,description:'Salário',category:'Salário',date:'2026-09-05',type:'income',amount:7200,account:'Itaú'},
+{id:2,description:'Projeto freelance',category:'Freelance',date:'2026-09-18',type:'income',amount:1350,account:'Inter'},
+{id:3,description:'Aluguel',category:'Moradia',date:'2026-09-08',type:'expense',amount:1850,account:'Itaú'},
+{id:4,description:'Supermercado',category:'Alimentação',date:'2026-09-23',type:'expense',amount:486.75,account:'Nubank'},
+{id:5,description:'Internet residencial',category:'Moradia',date:'2026-09-21',type:'expense',amount:119.90,account:'Inter'},
+{id:6,description:'Academia',category:'Saúde',date:'2026-09-20',type:'expense',amount:99.90,account:'Nubank'},
+{id:7,description:'Combustível',category:'Transporte',date:'2026-09-17',type:'expense',amount:240,account:'Nubank'},
+{id:8,description:'Cinema',category:'Lazer',date:'2026-09-14',type:'expense',amount:76,account:'Inter'}];
+let transactions=JSON.parse(localStorage.getItem('nexo-flow-transactions')||'null')||baseTransactions;
+let privateMode=false,lastAdded=null,selectedBank='';
+const brl=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+const dateFormat=new Intl.DateTimeFormat('pt-BR',{day:'2-digit',month:'short',year:'numeric'});
+const monthData=[{m:'ABR',i:6100,e:4200},{m:'MAI',i:6800,e:4600},{m:'JUN',i:6400,e:4100},{m:'JUL',i:7300,e:4800},{m:'AGO',i:6900,e:4500},{m:'SET',i:8550,e:0}];
+const categoryIcons={'Salário':'▣','Freelance':'✦','Moradia':'⌂','Alimentação':'◇','Saúde':'＋','Transporte':'➜','Lazer':'☆','Educação':'▤','Outros':'○'};
+const limits={Alimentação:1000,Moradia:2200,Transporte:600,Lazer:450,Saúde:400};
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function money(n){return privateMode?'R$ ••••':brl.format(n);}
+function totals(){const income=transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);const expense=transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);return{income,expense,balance:income-expense};}
+function save(){localStorage.setItem('nexo-flow-transactions',JSON.stringify(transactions));}
+function renderAll(){const t=totals();document.querySelector('#balanceValue').textContent=money(t.balance);document.querySelector('#incomeValue').textContent=money(t.income);document.querySelector('#expenseValue').textContent=money(t.expense);document.querySelector('#savedValue').textContent=money(Math.max(0,t.balance));monthData[5].e=t.expense;renderChart();renderTable();renderBudgets();document.querySelectorAll('.private-value').forEach(el=>{if(!el.dataset.real)el.dataset.real=el.textContent;if(privateMode&&!['balanceValue','incomeValue','expenseValue','savedValue'].includes(el.id))el.textContent='R$ ••••';else if(!privateMode&&el.dataset.real)el.textContent=el.dataset.real;});}
+function renderChart(){const count=Number(document.querySelector('#chartPeriod').value);const data=monthData.slice(-count);const max=Math.max(...data.flatMap(x=>[x.i,x.e]),1);document.querySelector('#cashChart').innerHTML=data.map(x=>`<div class="bar-pair"><i class="income" style="height:${x.i/max*92}%" title="Receitas ${brl.format(x.i)}"></i><i class="expense" style="height:${x.e/max*92}%" title="Despesas ${brl.format(x.e)}"></i><span>${x.m}</span></div>`).join('');}
+function renderTable(){const q=document.querySelector('#searchInput').value.toLowerCase(),type=document.querySelector('#typeFilter').value,cat=document.querySelector('#categoryFilter').value;const list=[...transactions].sort((a,b)=>b.date.localeCompare(a.date)).filter(t=>(t.description.toLowerCase().includes(q)||t.category.toLowerCase().includes(q))&&(type==='all'||t.type===type)&&(cat==='all'||t.category===cat));document.querySelector('#transactionRows').innerHTML=list.map(t=>`<tr><td><div class="transaction-name"><i>${categoryIcons[t.category]||'○'}</i><span><strong>${esc(t.description)}</strong><small>${t.type==='income'?'Recebimento':'Pagamento'}</small></span></div></td><td>${t.category}</td><td>${dateFormat.format(new Date(t.date+'T12:00:00'))}</td><td>${t.account||'Manual'}</td><td class="${t.type==='income'?'amount-income':'amount-expense'}">${privateMode?'R$ ••••':`${t.type==='income'?'+':'−'} ${brl.format(t.amount)}`}</td><td><button class="delete" data-delete="${t.id}" aria-label="Excluir ${esc(t.description)}">×</button></td></tr>`).join('');document.querySelector('#emptyState').hidden=list.length>0;}
+function renderBudgets(){const spent=transactions.filter(t=>t.type==='expense').reduce((a,t)=>{a[t.category]=(a[t.category]||0)+t.amount;return a;},{});document.querySelector('#budgetList').innerHTML=Object.entries(limits).map(([c,l])=>{const v=spent[c]||0,p=Math.min(100,Math.round(v/l*100));return`<div class="budget-row"><span>${categoryIcons[c]}</span><div><b>${c}</b><small>${p}% utilizado</small></div><small>${money(v)} / ${privateMode?'••••':brl.format(l)}</small><i><em style="width:${p}%"></em></i></div>`}).join('');}
+function showView(name){document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===`view-${name}`));document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.view===name));const titles={dashboard:'Olá, Marina 👋',transactions:'Movimentações',planning:'Planejamento',accounts:'Open Finance',ai:'Nexo IA'};document.querySelector('#pageTitle').textContent=titles[name];document.querySelector('#sidebar').classList.remove('open');window.scrollTo({top:0,behavior:'smooth'});}
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
+document.querySelectorAll('[data-view-link]').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.viewLink)));
+document.querySelector('#menuBtn').addEventListener('click',()=>document.querySelector('#sidebar').classList.toggle('open'));
+document.querySelector('#privacyBtn').addEventListener('click',()=>{privateMode=!privateMode;document.querySelector('#privacyBtn').textContent=privateMode?'◌':'◉';renderAll();});
+document.querySelector('#chartPeriod').addEventListener('change',renderChart);
 ['searchInput','typeFilter','categoryFilter'].forEach(id=>document.querySelector(`#${id}`).addEventListener(id==='searchInput'?'input':'change',renderTable));
-
-const dialog=document.querySelector('#transactionDialog');
-document.querySelectorAll('.open-transaction').forEach(b=>b.addEventListener('click',()=>{document.querySelector('#dateInput').value='2026-09-28';document.querySelector('#formError').textContent='';dialog.hidden=false;document.body.style.overflow='hidden';setTimeout(()=>document.querySelector('#descriptionInput').focus(),50);}));
-function closeDialog(){dialog.hidden=true;document.body.style.overflow='';}
-document.querySelectorAll('.close-dialog').forEach(b=>b.addEventListener('click',closeDialog));
-dialog.addEventListener('click',e=>{if(e.target===dialog)closeDialog();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!dialog.hidden)closeDialog();});
-document.querySelectorAll('.type-switch button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.type-switch button').forEach(x=>x.classList.toggle('active',x===b));document.querySelector('#transactionType').value=b.dataset.type;}));
-document.querySelector('#transactionForm').addEventListener('submit',e=>{
-  e.preventDefault();const desc=document.querySelector('#descriptionInput').value.trim();const amount=Number(document.querySelector('#amountInput').value.replace('.','').replace(',','.'));const date=document.querySelector('#dateInput').value;
-  if(desc.length<2||!amount||amount<=0||!date){document.querySelector('#formError').textContent='Confira a descrição, o valor e a data antes de salvar.';return;}
-  lastAdded={id:Date.now(),description:desc,amount,date,type:document.querySelector('#transactionType').value,category:document.querySelector('#formCategory').value};transactions.push(lastAdded);save();updateDashboard();closeDialog();e.target.reset();document.querySelector('#transactionType').value='expense';showToast();
-});
-document.querySelector('#undoBtn').addEventListener('click',()=>{if(!lastAdded)return;transactions=transactions.filter(t=>t.id!==lastAdded.id);save();updateDashboard();lastAdded=null;document.querySelector('#toast').classList.remove('show');showToast('Ação desfeita','O lançamento foi removido.');});
-document.querySelector('#transactionsTable').addEventListener('click',e=>{const btn=e.target.closest('[data-delete]');if(!btn)return;const item=transactions.find(t=>t.id===Number(btn.dataset.delete));if(confirm(`Excluir “${item.description}”? Esta ação não poderá ser desfeita.`)){transactions=transactions.filter(t=>t.id!==item.id);save();updateDashboard();showToast('Transação excluída','Os totais foram recalculados.');}});
-document.querySelector('#goalBtn').addEventListener('click',()=>{const current=8500;document.querySelector('#goalCurrent').textContent=money(current);document.querySelector('#goalBar').style.width='57%';document.querySelector('#goalBtn').disabled=true;document.querySelector('#goalBtn').textContent='R$ 100 adicionados';showToast('Meta atualizada','Você está mais perto da sua reserva.');});
-document.querySelector('#newGoalBtn').addEventListener('click',()=>showToast('Recurso demonstrativo','O cadastro de novas metas pode ser integrado depois.'));
-document.querySelector('#exportBtn').addEventListener('click',()=>{const header='Descrição,Categoria,Data,Tipo,Valor';const rows=transactions.map(t=>[t.description,t.category,t.date,t.type,t.amount.toFixed(2)].map(v=>`"${String(v).replaceAll('"','""')}"`).join(','));const blob=new Blob([[header,...rows].join('\n')],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='transacoes-nexo.csv';a.click();URL.revokeObjectURL(a.href);showToast('Arquivo preparado','As transações foram exportadas em CSV.');});
-
-populateCategories();updateDashboard();
+const transactionModal=document.querySelector('#transactionModal');
+function openTransaction(){transactionModal.hidden=false;document.body.style.overflow='hidden';document.querySelector('#dateInput').value='2026-09-28';setTimeout(()=>document.querySelector('#descriptionInput').focus(),50);}
+function closeTransaction(){transactionModal.hidden=true;document.body.style.overflow='';}
+document.querySelectorAll('.open-transaction').forEach(b=>b.addEventListener('click',openTransaction));
+document.querySelectorAll('.modal-close').forEach(b=>b.addEventListener('click',closeTransaction));
+document.querySelectorAll('.type-toggle button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.type-toggle button').forEach(x=>x.classList.toggle('active',x===b));document.querySelector('#transactionType').value=b.dataset.type;}));
+document.querySelector('#transactionForm').addEventListener('submit',e=>{e.preventDefault();const d=document.querySelector('#descriptionInput').value.trim(),raw=document.querySelector('#amountInput').value.replace('.','').replace(',','.'),amount=Number(raw),date=document.querySelector('#dateInput').value;if(d.length<2||!amount||amount<=0||!date){document.querySelector('#formError').textContent='Preencha descrição, valor e data corretamente.';return;}lastAdded={id:Date.now(),description:d,category:document.querySelector('#formCategory').value,date,type:document.querySelector('#transactionType').value,amount,account:'Manual'};transactions.push(lastAdded);save();renderAll();closeTransaction();e.target.reset();showToast('Lançamento salvo','Saldo e gráficos atualizados.');});
+document.querySelector('#transactionRows').addEventListener('click',e=>{const b=e.target.closest('[data-delete]');if(!b)return;const item=transactions.find(t=>t.id===Number(b.dataset.delete));if(confirm(`Excluir “${item.description}”?`)){transactions=transactions.filter(t=>t.id!==item.id);save();renderAll();showToast('Transação excluída','Os totais foram recalculados.');}});
+document.querySelector('#undoBtn').addEventListener('click',()=>{if(!lastAdded)return;transactions=transactions.filter(t=>t.id!==lastAdded.id);save();renderAll();lastAdded=null;showToast('Ação desfeita','O lançamento foi removido.');});
+document.querySelector('#exportBtn').addEventListener('click',()=>{const rows=['Descrição,Categoria,Data,Tipo,Conta,Valor',...transactions.map(t=>[t.description,t.category,t.date,t.type,t.account,t.amount.toFixed(2)].map(x=>`"${String(x).replaceAll('"','""')}"`).join(','))];const blob=new Blob([rows.join('\n')],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='nexo-transacoes.csv';a.click();URL.revokeObjectURL(a.href);showToast('CSV exportado','Arquivo preparado para download.');});
+const bankModal=document.querySelector('#bankModal');
+function setBankStep(n){document.querySelectorAll('.bank-step').forEach(s=>s.classList.toggle('active',Number(s.dataset.step)===n));document.querySelectorAll('.steps span').forEach((s,i)=>s.classList.toggle('active',i<n));}
+function openBank(){bankModal.hidden=false;document.body.style.overflow='hidden';setBankStep(1);}
+function closeBank(){bankModal.hidden=true;document.body.style.overflow='';}
+document.querySelectorAll('.connect-bank').forEach(b=>b.addEventListener('click',openBank));document.querySelectorAll('.bank-close').forEach(b=>b.addEventListener('click',closeBank));
+document.querySelectorAll('[data-bank]').forEach(b=>b.addEventListener('click',()=>{selectedBank=b.dataset.bank;document.querySelector('#selectedBankName').textContent=selectedBank;document.querySelector('#selectedBankLogo').textContent=b.querySelector('i').textContent;document.querySelector('#selectedBankLogo').className=b.querySelector('i').className;setBankStep(2);}));
+document.querySelector('#bankSearch').addEventListener('input',e=>document.querySelectorAll('[data-bank]').forEach(b=>b.hidden=!b.dataset.bank.toLowerCase().includes(e.target.value.toLowerCase())));
+document.querySelector('#authorizeBank').addEventListener('click',()=>{setBankStep(3);document.querySelector('#successBankText').textContent=`${selectedBank} foi adicionada à demonstração do painel.`;});
+bankModal.addEventListener('click',e=>{if(e.target===bankModal)closeBank();});transactionModal.addEventListener('click',e=>{if(e.target===transactionModal)closeTransaction();});
+function showToast(title,text){const t=document.querySelector('#toast');t.querySelector('strong').textContent=title;t.querySelector('small').textContent=text;t.classList.add('show');clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>t.classList.remove('show'),4200);}
+const answers={'Onde estou gastando mais?':'Sua maior categoria é Moradia, seguida por Alimentação. O gasto com delivery cresceu 22% e representa a melhor oportunidade de ajuste.','Posso comprar um notebook?':'Mantendo o ritmo atual, você pode atingir R$ 6.000 em aproximadamente 7 meses. Para comprar antes, destine R$ 350 extras por mês à meta.','Como economizar R$ 500?':'Sugestão: reduza R$ 220 em delivery, pause R$ 90 em assinaturas pouco usadas e defina um teto semanal de lazer para economizar os R$ 190 restantes.'};
+function askAI(q){if(!q.trim())return;const messages=document.querySelector('#messages');messages.insertAdjacentHTML('beforeend',`<div class="message user-message"><p>${esc(q)}</p></div>`);messages.insertAdjacentHTML('beforeend',`<div class="message ai-message"><span>✦</span><p>${answers[q]||'Com base na sua projeção, recomendo priorizar a reserva de emergência e manter os gastos variáveis abaixo de R$ 1.500 neste mês.'}</p></div>`);messages.scrollTop=messages.scrollHeight;}
+document.querySelectorAll('[data-question]').forEach(b=>b.addEventListener('click',()=>askAI(b.dataset.question)));document.querySelector('#chatForm').addEventListener('submit',e=>{e.preventDefault();askAI(document.querySelector('#chatInput').value);document.querySelector('#chatInput').value='';});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeTransaction();closeBank();}});
+const catSelect=document.querySelector('#categoryFilter');[...new Set(transactions.map(t=>t.category))].sort().forEach(c=>catSelect.insertAdjacentHTML('beforeend',`<option>${c}</option>`));renderAll();
