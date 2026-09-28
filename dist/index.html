@@ -1,155 +1,134 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Nexo - painel pessoal para organizar receitas, despesas, metas e orçamentos.">
-  <meta name="theme-color" content="#09111f">
-  <title>Nexo | Controle financeiro</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23b8f548'/%3E%3Cpath d='M18 42V22h8l12 12V22h8v20h-8L26 30v12z' fill='%2309111f'/%3E%3C/svg%3E">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Nexo Flow - controle financeiro inteligente com Open Finance e insights de IA.">
+  <meta name="theme-color" content="#171729">
+  <title>Nexo Flow | Sua vida financeira</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g'%3E%3Cstop stop-color='%236d5dfb'/%3E%3Cstop offset='1' stop-color='%23ff7a5c'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='18' fill='url(%23g)'/%3E%3Cpath d='M17 43V21h8l14 13V21h8v22h-8L25 30v13z' fill='white'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
-  <div class="app-shell">
-    <aside class="sidebar" id="sidebar" aria-label="Navegação principal">
-      <div class="brand"><span class="brand-mark">N</span><span>Nexo</span></div>
-      <nav class="nav-list">
-        <button class="nav-item active" data-view="inicio" aria-current="page">
-          <span class="nav-icon">⌂</span><span>Visão geral</span>
-        </button>
-        <button class="nav-item" data-view="transacoes">
-          <span class="nav-icon">↕</span><span>Transações</span>
-        </button>
-        <button class="nav-item" data-view="planejamento">
-          <span class="nav-icon">◎</span><span>Planejamento</span>
-        </button>
+  <a class="skip" href="#main">Pular para o conteúdo</a>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand"><span class="logo">N</span><span>Nexo <b>Flow</b></span></div>
+      <nav aria-label="Navegação principal">
+        <button class="nav-btn active" data-view="dashboard"><span>⌂</span>Início</button>
+        <button class="nav-btn" data-view="transactions"><span>↕</span>Transações</button>
+        <button class="nav-btn" data-view="planning"><span>◎</span>Planejamento</button>
+        <button class="nav-btn" data-view="accounts"><span>▣</span>Contas e cartões</button>
+        <button class="nav-btn" data-view="ai"><span>✦</span>Nexo IA <i>Novo</i></button>
       </nav>
-      <div class="sidebar-card">
-        <span class="eyebrow">Saúde financeira</span>
-        <strong id="healthScore">82 pontos</strong>
-        <div class="mini-progress"><span style="width:82%"></span></div>
-        <p>Seu orçamento está equilibrado.</p>
-      </div>
-      <div class="profile">
-        <div class="avatar" aria-hidden="true">MS</div>
-        <div><strong>Marina Silva</strong><span>Conta pessoal</span></div>
-        <button class="icon-btn" aria-label="Abrir configurações">•••</button>
-      </div>
+      <div class="side-spacer"></div>
+      <button class="open-finance-card connect-bank">
+        <span class="open-icon">∞</span>
+        <span><strong>Open Finance</strong><small>3 instituições conectadas</small></span>
+        <b>＋</b>
+      </button>
+      <div class="user-card"><span class="avatar">MC</span><span><strong>Marina Costa</strong><small>Plano Essencial</small></span><button aria-label="Configurações">•••</button></div>
     </aside>
 
-    <main id="conteudo" class="main">
+    <main id="main">
       <header class="topbar">
-        <button id="menuBtn" class="icon-btn menu-btn" aria-label="Abrir menu" aria-expanded="false">☰</button>
-        <div>
-          <p class="eyebrow" id="todayLabel">SEGUNDA, 28 DE SETEMBRO</p>
-          <h1 id="pageTitle">Seu dinheiro, com clareza.</h1>
-        </div>
+        <button class="mobile-menu" id="menuBtn" aria-label="Abrir menu">☰</button>
+        <div><small id="dateLabel">28 DE SETEMBRO DE 2026</small><h1 id="pageTitle">Olá, Marina 👋</h1></div>
         <div class="top-actions">
-          <button id="privacyBtn" class="control-btn" aria-pressed="false" title="Ocultar valores"><span>◉</span><span class="desktop-label">Ocultar valores</span></button>
-          <button id="themeBtn" class="icon-btn" aria-label="Alternar tema" title="Alternar tema">☼</button>
-          <button class="primary-btn open-transaction"><span>＋</span> Novo lançamento</button>
+          <button class="icon-button" id="privacyBtn" aria-label="Ocultar valores" title="Ocultar valores">◉</button>
+          <button class="notification" aria-label="Notificações">♢<i></i></button>
+          <button class="secondary connect-bank"><span>∞</span><span class="hide-mobile">Conectar banco</span></button>
+          <button class="primary open-transaction">＋ <span class="hide-mobile">Novo lançamento</span></button>
         </div>
       </header>
 
-      <section class="view active" id="view-inicio" aria-labelledby="pageTitle">
-        <div class="balance-grid">
-          <article class="balance-card featured">
-            <div class="card-top"><span>Saldo disponível</span><span class="chip positive">↑ 8,4%</span></div>
-            <strong class="money hero-money" data-value id="balanceValue">R$ 0,00</strong>
-            <div class="balance-meta"><span>Última atualização: agora</span><span class="trend-label">+ R$ 1.240 este mês</span></div>
-            <div class="decor-line" aria-hidden="true"></div>
+      <section class="view active" id="view-dashboard">
+        <div class="headline"><div><p>Visão consolidada das suas contas</p></div><div class="sync"><i></i>Sincronizado agora</div></div>
+
+        <div class="summary-grid">
+          <article class="balance-card">
+            <div class="balance-top"><span>Patrimônio disponível</span><button aria-label="Mais opções">•••</button></div>
+            <strong id="balanceValue" class="private-value">R$ 0,00</strong>
+            <div class="balance-change"><span>↗ 6,8%</span> em relação ao mês passado</div>
+            <div class="balance-spark" aria-hidden="true"><i style="height:35%"></i><i style="height:48%"></i><i style="height:42%"></i><i style="height:66%"></i><i style="height:59%"></i><i style="height:83%"></i><i style="height:100%"></i></div>
           </article>
-          <article class="metric-card">
-            <div class="metric-icon income">↙</div>
-            <div><span>Receitas</span><strong class="money" data-value id="incomeValue">R$ 0,00</strong><small class="good">+12% vs. mês anterior</small></div>
+          <article class="stat-card"><div class="stat-head"><span class="stat-icon cyan">↙</span><span class="tag up">+12,4%</span></div><small>Receitas no mês</small><strong id="incomeValue" class="private-value">R$ 0,00</strong><p>R$ 1.350 acima da média</p></article>
+          <article class="stat-card"><div class="stat-head"><span class="stat-icon coral">↗</span><span class="tag down">+3,2%</span></div><small>Despesas no mês</small><strong id="expenseValue" class="private-value">R$ 0,00</strong><p>34% da sua renda mensal</p></article>
+          <article class="stat-card"><div class="stat-head"><span class="stat-icon purple">◎</span><span class="tag up">No caminho</span></div><small>Economizado</small><strong id="savedValue" class="private-value">R$ 0,00</strong><p>Meta do mês: R$ 2.000</p></article>
+        </div>
+
+        <article class="ai-banner">
+          <div class="ai-orb"><span>✦</span></div>
+          <div><small>INSIGHT DA NEXO IA</small><h2>Você pode economizar <b>R$ 380</b> neste mês</h2><p>Seus gastos com delivery subiram 22%. Preparei três sugestões personalizadas.</p></div>
+          <button class="ai-action" data-view-link="ai">Ver análise completa <span>→</span></button>
+          <div class="ai-glow"></div>
+        </article>
+
+        <div class="content-grid">
+          <article class="panel cash-panel">
+            <div class="panel-title"><div><small>FLUXO FINANCEIRO</small><h2>Entradas e saídas</h2></div><select id="chartPeriod"><option value="6">Últimos 6 meses</option><option value="4">Últimos 4 meses</option></select></div>
+            <div class="chart-total"><strong>R$ 26.840</strong><span><i class="purple-dot"></i>Receitas</span><span><i class="coral-dot"></i>Despesas</span></div>
+            <div class="chart" id="cashChart" role="img" aria-label="Comparação de receitas e despesas"></div>
           </article>
-          <article class="metric-card">
-            <div class="metric-icon expense">↗</div>
-            <div><span>Despesas</span><strong class="money" data-value id="expenseValue">R$ 0,00</strong><small>62% da sua receita</small></div>
+          <article class="panel spending-panel">
+            <div class="panel-title"><div><small>GASTOS</small><h2>Por categoria</h2></div><button class="link-btn" data-view-link="planning">Detalhes →</button></div>
+            <div class="donut-row"><div class="donut"><span><strong>R$ 2,8 mil</strong><small>Total gasto</small></span></div><div class="legend"><span><i class="food"></i><b>Alimentação</b><small>32%</small></span><span><i class="home"></i><b>Moradia</b><small>28%</small></span><span><i class="move"></i><b>Transporte</b><small>18%</small></span><span><i class="fun"></i><b>Outros</b><small>22%</small></span></div></div>
           </article>
         </div>
 
-        <div class="dashboard-grid">
-          <article class="panel cashflow-panel">
-            <div class="panel-head">
-              <div><span class="eyebrow">FLUXO DE CAIXA</span><h2>Entradas e saídas</h2></div>
-              <select id="periodSelect" aria-label="Período do gráfico">
-                <option value="6">Últimos 6 meses</option>
-                <option value="3">Últimos 3 meses</option>
-              </select>
+        <div class="content-grid lower">
+          <article class="panel accounts-preview">
+            <div class="panel-title"><div><small>OPEN FINANCE</small><h2>Contas conectadas</h2></div><button class="link-btn connect-bank">＋ Conectar</button></div>
+            <div class="bank-strip">
+              <button class="bank-mini nubank"><span>Nu</span><small>Nubank</small><strong class="private-value">R$ 3.240,80</strong></button>
+              <button class="bank-mini inter"><span>in</span><small>Banco Inter</small><strong class="private-value">R$ 1.890,20</strong></button>
+              <button class="bank-mini itau"><span>it</span><small>Itaú</small><strong class="private-value">R$ 546,45</strong></button>
             </div>
-            <div class="chart-legend"><span><i class="dot income-dot"></i>Receitas</span><span><i class="dot expense-dot"></i>Despesas</span></div>
-            <div id="cashChart" class="cash-chart" role="img" aria-label="Gráfico comparando receitas e despesas"></div>
+            <div class="secure-note">▱ Seus dados são protegidos e você controla as permissões.</div>
           </article>
-
-          <article class="panel budget-panel">
-            <div class="panel-head">
-              <div><span class="eyebrow">ORÇAMENTO</span><h2>Limite mensal</h2></div>
-              <span class="budget-status">No ritmo</span>
-            </div>
-            <div class="budget-ring-wrap">
-              <div class="budget-ring" id="budgetRing"><div><strong id="budgetPercent">0%</strong><span>utilizado</span></div></div>
-              <div class="budget-summary"><span>Gasto até agora</span><strong class="money" data-value id="budgetSpent">R$ 0</strong><small>de R$ 6.000</small></div>
-            </div>
-            <div class="budget-alert"><span>✦</span><p><strong>Boa margem!</strong><br>Você pode gastar R$ 120 por dia até o fim do mês.</p></div>
-          </article>
-        </div>
-
-        <div class="lower-grid">
-          <article class="panel transactions-panel">
-            <div class="panel-head"><div><span class="eyebrow">ATIVIDADE RECENTE</span><h2>Últimas transações</h2></div><button class="text-btn" data-go="transacoes">Ver todas →</button></div>
-            <div id="recentTransactions" class="transaction-list"></div>
-          </article>
-          <article class="panel goal-panel">
-            <div class="panel-head"><div><span class="eyebrow">META EM DESTAQUE</span><h2>Reserva de emergência</h2></div><span class="goal-icon">⌁</span></div>
-            <p>Uma tranquilidade de 6 meses, construída aos poucos.</p>
-            <div class="goal-values"><strong class="money" data-value id="goalCurrent">R$ 8.400</strong><span>de R$ 15.000</span></div>
-            <div class="goal-progress"><span id="goalBar" style="width:56%"></span></div>
-            <div class="goal-footer"><span>56% concluído</span><span>Faltam R$ 6.600</span></div>
-            <button id="goalBtn" class="secondary-btn">Adicionar R$ 100 à meta</button>
+          <article class="panel upcoming-panel">
+            <div class="panel-title"><div><small>AGENDA</small><h2>Próximos pagamentos</h2></div><button class="calendar-chip">Setembro⌄</button></div>
+            <div class="upcoming-list"><div><span class="date-box"><b>29</b>SET</span><span><strong>Fatura Nubank</strong><small>Cartão de crédito</small></span><b class="private-value">R$ 1.284,60</b></div><div><span class="date-box"><b>01</b>OUT</span><span><strong>Aluguel</strong><small>Pagamento recorrente</small></span><b class="private-value">R$ 1.850,00</b></div><div><span class="date-box"><b>03</b>OUT</span><span><strong>Streaming</strong><small>3 assinaturas</small></span><b class="private-value">R$ 89,70</b></div></div>
           </article>
         </div>
       </section>
 
-      <section class="view" id="view-transacoes" aria-labelledby="transactionsTitle">
-        <div class="section-intro"><div><span class="eyebrow">HISTÓRICO</span><h2 id="transactionsTitle">Todas as transações</h2><p>Encontre e organize cada movimento do seu dinheiro.</p></div><button class="primary-btn open-transaction">＋ Novo lançamento</button></div>
-        <div class="panel filters-panel">
-          <label class="search-field"><span>⌕</span><input id="searchInput" type="search" placeholder="Buscar por descrição ou categoria"></label>
-          <select id="typeFilter" aria-label="Filtrar por tipo"><option value="all">Todos os tipos</option><option value="income">Receitas</option><option value="expense">Despesas</option></select>
-          <select id="categoryFilter" aria-label="Filtrar por categoria"><option value="all">Todas as categorias</option></select>
-          <button id="exportBtn" class="control-btn">⇩ Exportar CSV</button>
-        </div>
-        <div class="panel table-panel">
-          <div class="table-wrap"><table><thead><tr><th>Descrição</th><th>Categoria</th><th>Data</th><th>Tipo</th><th class="align-right">Valor</th><th><span class="sr-only">Ações</span></th></tr></thead><tbody id="transactionsTable"></tbody></table></div>
-          <div id="emptyState" class="empty-state" hidden><strong>Nenhuma transação encontrada</strong><span>Tente alterar os filtros ou registre um novo lançamento.</span></div>
+      <section class="view" id="view-transactions">
+        <div class="section-heading"><div><small>MOVIMENTAÇÕES</small><h2>Todas as transações</h2><p>Acompanhe cada entrada e saída em um só lugar.</p></div><button class="primary open-transaction">＋ Novo lançamento</button></div>
+        <div class="filter-bar"><label>⌕<input id="searchInput" type="search" placeholder="Buscar transação"></label><select id="typeFilter"><option value="all">Todos os tipos</option><option value="income">Receitas</option><option value="expense">Despesas</option></select><select id="categoryFilter"><option value="all">Todas as categorias</option></select><button class="secondary" id="exportBtn">⇩ Exportar CSV</button></div>
+        <article class="panel transaction-table"><table><thead><tr><th>Transação</th><th>Categoria</th><th>Data</th><th>Conta</th><th>Valor</th><th></th></tr></thead><tbody id="transactionRows"></tbody></table><div class="empty" id="emptyState" hidden>Nenhuma transação encontrada.</div></article>
+      </section>
+
+      <section class="view" id="view-planning">
+        <div class="section-heading"><div><small>PLANEJAMENTO</small><h2>Seu próximo capítulo</h2><p>Metas, limites e projeções para tomar decisões melhores.</p></div><button class="secondary">＋ Criar meta</button></div>
+        <div class="plan-grid">
+          <article class="forecast-card"><small>PROJEÇÃO NEXO</small><h2>Saldo previsto para dezembro</h2><strong class="private-value">R$ 12.480</strong><span>↗ R$ 4.200 nos próximos 90 dias</span><div class="forecast-line"><i></i><b></b><em></em><span></span></div><div class="forecast-months"><span>SET</span><span>OUT</span><span>NOV</span><span>DEZ</span></div></article>
+          <article class="panel budget-list"><div class="panel-title"><div><small>LIMITES</small><h2>Orçamento do mês</h2></div><span>47% utilizado</span></div><div id="budgetList"></div></article>
+          <article class="panel goals"><div class="panel-title"><div><small>SONHOS</small><h2>Metas financeiras</h2></div><button class="link-btn">Ver todas</button></div><div class="goal"><span>🛟</span><div><b>Reserva de emergência</b><small>R$ 8.400 de R$ 15.000</small><i><em style="width:56%"></em></i></div><strong>56%</strong></div><div class="goal"><span>✈️</span><div><b>Viagem para o Chile</b><small>R$ 2.150 de R$ 5.000</small><i><em style="width:43%"></em></i></div><strong>43%</strong></div><div class="goal"><span>💻</span><div><b>Novo notebook</b><small>R$ 900 de R$ 6.000</small><i><em style="width:15%"></em></i></div><strong>15%</strong></div></article>
         </div>
       </section>
 
-      <section class="view" id="view-planejamento" aria-labelledby="planningTitle">
-        <div class="section-intro"><div><span class="eyebrow">PRÓXIMOS PASSOS</span><h2 id="planningTitle">Planejamento financeiro</h2><p>Transforme objetivos em ações simples e mensuráveis.</p></div><span class="plan-date">Setembro · 2026</span></div>
-        <div class="planning-grid">
-          <article class="panel planning-hero"><span class="eyebrow">PREVISÃO DO MÊS</span><h3>Você deve fechar setembro no positivo.</h3><strong class="money" data-value id="forecastValue">+ R$ 1.240</strong><p>Se mantiver o ritmo atual, 18% da renda poderá ser direcionada para suas metas.</p><div class="forecast-bars"><span style="height:48%"></span><span style="height:62%"></span><span style="height:54%"></span><span style="height:76%"></span><span style="height:68%"></span><span class="current" style="height:88%"></span></div></article>
-          <article class="panel category-panel"><div class="panel-head"><div><span class="eyebrow">POR CATEGORIA</span><h2>Orçamentos</h2></div><span>Setembro</span></div><div id="categoryBudgets" class="category-budgets"></div></article>
-          <article class="panel goals-panel"><div class="panel-head"><div><span class="eyebrow">OBJETIVOS</span><h2>Minhas metas</h2></div><button class="text-btn" id="newGoalBtn">＋ Nova meta</button></div><div class="goal-item"><span class="goal-emoji">🛡</span><div><strong>Reserva de emergência</strong><span>R$ 8.400 de R$ 15.000</span><div class="small-progress"><i style="width:56%"></i></div></div><b>56%</b></div><div class="goal-item"><span class="goal-emoji">✈</span><div><strong>Viagem de férias</strong><span>R$ 2.150 de R$ 5.000</span><div class="small-progress"><i style="width:43%"></i></div></div><b>43%</b></div></article>
+      <section class="view" id="view-accounts">
+        <div class="section-heading"><div><small>OPEN FINANCE</small><h2>Contas e cartões</h2><p>Uma visão unificada, mesmo usando bancos diferentes.</p></div><button class="primary connect-bank">∞ Conectar instituição</button></div>
+        <div class="open-finance-hero"><div><span class="open-badge">OPEN FINANCE BRASIL</span><h2>Todos os seus bancos.<br>Uma única visão.</h2><p>Conecte instituições de forma segura e escolha exatamente quais informações deseja compartilhar.</p><button class="white-btn connect-bank">Conectar um novo banco →</button></div><div class="orbit"><span class="orbit-center">N</span><i class="o1">Nu</i><i class="o2">in</i><i class="o3">it</i><i class="o4">+</i></div></div>
+        <div class="account-cards"><article class="account-card purple-bank"><header><span>Nu</span><small>ATUALIZADO AGORA</small></header><p>Conta corrente</p><strong class="private-value">R$ 3.240,80</strong><footer><span>•••• 4821</span><b>Conectado</b></footer></article><article class="account-card orange-bank"><header><span>in</span><small>ATUALIZADO HÁ 2 MIN</small></header><p>Conta digital</p><strong class="private-value">R$ 1.890,20</strong><footer><span>•••• 1904</span><b>Conectado</b></footer></article><article class="account-card blue-bank"><header><span>it</span><small>ATUALIZADO HÁ 5 MIN</small></header><p>Conta corrente</p><strong class="private-value">R$ 546,45</strong><footer><span>•••• 7032</span><b>Conectado</b></footer></article></div>
+        <article class="panel permissions"><div><span class="shield">✓</span><div><h3>Você está no controle</h3><p>As conexões podem ser pausadas ou removidas a qualquer momento. Esta tela é uma simulação para apresentação acadêmica.</p></div></div><button class="secondary">Gerenciar permissões</button></article>
+      </section>
+
+      <section class="view" id="view-ai">
+        <div class="ai-page">
+          <div class="ai-sidebar"><div class="ai-logo">✦</div><h2>Nexo IA</h2><p>Sua assistente entende seus hábitos e transforma dados em decisões simples.</p><div class="suggestions"><button data-question="Onde estou gastando mais?">Onde estou gastando mais?</button><button data-question="Posso comprar um notebook?">Posso comprar um notebook?</button><button data-question="Como economizar R$ 500?">Como economizar R$ 500?</button></div><small>Respostas demonstrativas com base nos dados fictícios do painel.</small></div>
+          <div class="chat"><header><span class="ai-avatar">✦</span><div><strong>Nexo IA</strong><small><i></i> Pronta para ajudar</small></div><button>•••</button></header><div class="messages" id="messages"><div class="message ai-message"><span>✦</span><p>Olá, Marina! Analisei seu mês. Você está com uma boa margem, mas encontrei oportunidades de economizar sem mudar muito sua rotina. O que quer descobrir?</p></div></div><form id="chatForm"><input id="chatInput" placeholder="Pergunte sobre sua vida financeira..." autocomplete="off"><button aria-label="Enviar">↑</button></form></div>
         </div>
       </section>
     </main>
   </div>
 
-  <div id="transactionDialog" class="dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="dialogTitle" hidden>
-    <form id="transactionForm" novalidate>
-      <div class="dialog-head"><div><span class="eyebrow">NOVO REGISTRO</span><h2 id="dialogTitle">Adicionar lançamento</h2></div><button type="button" class="icon-btn close-dialog" aria-label="Fechar">×</button></div>
-      <div class="type-switch" role="group" aria-label="Tipo de lançamento"><button type="button" class="active" data-type="expense">Despesa</button><button type="button" data-type="income">Receita</button></div>
-      <input type="hidden" id="transactionType" value="expense">
-      <label>Descrição<input id="descriptionInput" required maxlength="40" placeholder="Ex.: Supermercado"></label>
-      <div class="form-row"><label>Valor (R$)<input id="amountInput" required inputmode="decimal" placeholder="0,00"></label><label>Data<input id="dateInput" required type="date"></label></div>
-      <label>Categoria<select id="formCategory"><option>Alimentação</option><option>Moradia</option><option>Transporte</option><option>Lazer</option><option>Saúde</option><option>Educação</option><option>Salário</option><option>Freelance</option><option>Outros</option></select></label>
-      <p id="formError" class="form-error" role="alert"></p>
-      <div class="dialog-actions"><button type="button" class="secondary-btn close-dialog">Cancelar</button><button type="submit" class="primary-btn">Salvar lançamento</button></div>
-    </form>
-  </div>
-  <div id="toast" class="toast" role="status" aria-live="polite"><span>✓</span><p><strong>Lançamento salvo</strong><small>Seu saldo foi atualizado.</small></p><button id="undoBtn" class="text-btn">Desfazer</button></div>
+  <div class="modal" id="transactionModal" hidden role="dialog" aria-modal="true" aria-labelledby="transactionTitle"><form id="transactionForm"><header><div><small>NOVO REGISTRO</small><h2 id="transactionTitle">Adicionar lançamento</h2></div><button type="button" class="modal-close">×</button></header><div class="type-toggle"><button type="button" class="active" data-type="expense">Despesa</button><button type="button" data-type="income">Receita</button></div><input type="hidden" id="transactionType" value="expense"><label>Descrição<input id="descriptionInput" placeholder="Ex.: Supermercado" required></label><div class="field-row"><label>Valor (R$)<input id="amountInput" placeholder="0,00" required></label><label>Data<input id="dateInput" type="date" required></label></div><label>Categoria<select id="formCategory"><option>Alimentação</option><option>Moradia</option><option>Transporte</option><option>Lazer</option><option>Saúde</option><option>Educação</option><option>Salário</option><option>Freelance</option><option>Outros</option></select></label><p class="form-error" id="formError"></p><footer><button type="button" class="secondary modal-close">Cancelar</button><button class="primary" type="submit">Salvar lançamento</button></footer></form></div>
+
+  <div class="modal" id="bankModal" hidden role="dialog" aria-modal="true" aria-labelledby="bankTitle"><div class="bank-modal-box"><header><div><small>OPEN FINANCE</small><h2 id="bankTitle">Conectar uma instituição</h2></div><button class="bank-close">×</button></header><div class="steps"><span class="active">1</span><i></i><span>2</span><i></i><span>3</span></div><div class="bank-step active" data-step="1"><p>Escolha seu banco para iniciar uma conexão demonstrativa.</p><label class="bank-search">⌕<input id="bankSearch" placeholder="Busque uma instituição"></label><div class="bank-options"><button data-bank="Nubank"><i class="bank-logo nu">Nu</i><span><strong>Nubank</strong><small>Conta e cartão</small></span><b>›</b></button><button data-bank="Banco Inter"><i class="bank-logo bi">in</i><span><strong>Banco Inter</strong><small>Conta e investimentos</small></span><b>›</b></button><button data-bank="Itaú"><i class="bank-logo it">it</i><span><strong>Itaú</strong><small>Conta e cartão</small></span><b>›</b></button><button data-bank="Santander"><i class="bank-logo sa">S</i><span><strong>Santander</strong><small>Conta corrente</small></span><b>›</b></button></div></div><div class="bank-step" data-step="2"><div class="selected-bank"><i id="selectedBankLogo">∞</i><span><small>Instituição selecionada</small><strong id="selectedBankName">Banco</strong></span></div><h3>Você autoriza compartilhar:</h3><label class="permission-row"><span>Saldo e dados da conta<small>Para consolidar seu patrimônio</small></span><input type="checkbox" checked></label><label class="permission-row"><span>Transações dos últimos 12 meses<small>Para classificar seus gastos</small></span><input type="checkbox" checked></label><label class="permission-row"><span>Cartões e faturas<small>Para prever próximos pagamentos</small></span><input type="checkbox" checked></label><div class="consent-note">🔒 Esta é apenas uma simulação. Nenhum dado real será acessado.</div><button class="primary full" id="authorizeBank">Autorizar e continuar</button></div><div class="bank-step success-step" data-step="3"><div class="success-check">✓</div><h2>Conexão demonstrada!</h2><p id="successBankText">A instituição foi conectada ao painel.</p><button class="primary bank-close">Voltar ao painel</button></div></div></div>
+
+  <div class="toast" id="toast" role="status"><span>✓</span><div><strong>Ação concluída</strong><small>Os dados foram atualizados.</small></div><button id="undoBtn">Desfazer</button></div>
   <script src="app.js"></script>
 </body>
 </html>
