@@ -55,7 +55,7 @@
       <div class="side-spacer"></div>
       <button class="open-finance-card connect-bank">
         <span class="open-icon">∞</span>
-        <span><strong>Open Finance</strong><small>3 instituições conectadas</small></span>
+        <span><strong>Open Finance</strong><small id="bankCountLabel">Nenhuma instituição conectada</small></span>
         <b>＋</b>
       </button>
       <div class="user-card"><span class="avatar" id="userInitials">MC</span><span><strong id="userName">Marina Costa</strong><small id="userEmail">Plano Essencial</small></span><button id="logoutBtn" aria-label="Sair da conta" title="Sair">↪</button></div>
@@ -80,17 +80,17 @@
           <article class="balance-card">
             <div class="balance-top"><span>Patrimônio disponível</span><button aria-label="Mais opções">•••</button></div>
             <strong id="balanceValue" class="private-value">R$ 0,00</strong>
-            <div class="balance-change"><span>↗ 6,8%</span> em relação ao mês passado</div>
+            <div class="balance-change" id="balanceContext">Comece conectando um banco ou criando um lançamento</div>
             <div class="balance-spark" aria-hidden="true"><i style="height:35%"></i><i style="height:48%"></i><i style="height:42%"></i><i style="height:66%"></i><i style="height:59%"></i><i style="height:83%"></i><i style="height:100%"></i></div>
           </article>
-          <article class="stat-card"><div class="stat-head"><span class="stat-icon cyan">↙</span><span class="tag up">+12,4%</span></div><small>Receitas no mês</small><strong id="incomeValue" class="private-value">R$ 0,00</strong><p>R$ 1.350 acima da média</p></article>
-          <article class="stat-card"><div class="stat-head"><span class="stat-icon coral">↗</span><span class="tag down">+3,2%</span></div><small>Despesas no mês</small><strong id="expenseValue" class="private-value">R$ 0,00</strong><p>34% da sua renda mensal</p></article>
-          <article class="stat-card"><div class="stat-head"><span class="stat-icon purple">◎</span><span class="tag up">No caminho</span></div><small>Economizado</small><strong id="savedValue" class="private-value">R$ 0,00</strong><p>Meta do mês: R$ 2.000</p></article>
+          <article class="stat-card"><div class="stat-head"><span class="stat-icon cyan">↙</span><span class="tag up" id="incomeTag">Sem dados</span></div><small>Receitas no mês</small><strong id="incomeValue" class="private-value">R$ 0,00</strong><p id="incomeContext">Nenhuma receita cadastrada</p></article>
+          <article class="stat-card"><div class="stat-head"><span class="stat-icon coral">↗</span><span class="tag down" id="expenseTag">Sem dados</span></div><small>Despesas no mês</small><strong id="expenseValue" class="private-value">R$ 0,00</strong><p id="expenseContext">Nenhuma despesa cadastrada</p></article>
+          <article class="stat-card"><div class="stat-head"><span class="stat-icon purple">◎</span><span class="tag up" id="savedTag">Início</span></div><small>Economizado</small><strong id="savedValue" class="private-value">R$ 0,00</strong><p id="savedContext">Seu saldo positivo aparece aqui</p></article>
         </div>
 
         <article class="ai-banner">
           <div class="ai-orb"><span>✦</span></div>
-          <div><small>INSIGHT DA NEXO IA</small><h2>Você pode economizar <b>R$ 380</b> neste mês</h2><p>Seus gastos com delivery subiram 22%. Preparei três sugestões personalizadas.</p></div>
+          <div><small>INSIGHT DA NEXO IA</small><h2 id="aiInsightTitle">Seu painel está pronto para começar</h2><p id="aiInsightText">Conecte um banco fictício para importar movimentações de demonstração.</p></div>
           <button class="ai-action" data-view-link="ai">Ver análise completa <span>→</span></button>
           <div class="ai-glow"></div>
         </article>
@@ -98,28 +98,24 @@
         <div class="content-grid">
           <article class="panel cash-panel">
             <div class="panel-title"><div><small>FLUXO FINANCEIRO</small><h2>Entradas e saídas</h2></div><select id="chartPeriod"><option value="6">Últimos 6 meses</option><option value="4">Últimos 4 meses</option></select></div>
-            <div class="chart-total"><strong>R$ 26.840</strong><span><i class="purple-dot"></i>Receitas</span><span><i class="coral-dot"></i>Despesas</span></div>
+            <div class="chart-total"><strong id="chartTotal">R$ 0,00</strong><span><i class="purple-dot"></i>Receitas</span><span><i class="coral-dot"></i>Despesas</span></div>
             <div class="chart" id="cashChart" role="img" aria-label="Comparação de receitas e despesas"></div>
           </article>
           <article class="panel spending-panel">
             <div class="panel-title"><div><small>GASTOS</small><h2>Por categoria</h2></div><button class="link-btn" data-view-link="planning">Detalhes →</button></div>
-            <div class="donut-row"><div class="donut"><span><strong>R$ 2,8 mil</strong><small>Total gasto</small></span></div><div class="legend"><span><i class="food"></i><b>Alimentação</b><small>32%</small></span><span><i class="home"></i><b>Moradia</b><small>28%</small></span><span><i class="move"></i><b>Transporte</b><small>18%</small></span><span><i class="fun"></i><b>Outros</b><small>22%</small></span></div></div>
+            <div class="donut-row"><div class="donut" id="spendingDonut"><span><strong id="spendingTotal">R$ 0,00</strong><small>Total gasto</small></span></div><div class="legend" id="spendingLegend"><p class="empty-inline">Sem despesas para classificar.</p></div></div>
           </article>
         </div>
 
         <div class="content-grid lower">
           <article class="panel accounts-preview">
             <div class="panel-title"><div><small>OPEN FINANCE</small><h2>Contas conectadas</h2></div><button class="link-btn connect-bank">＋ Conectar</button></div>
-            <div class="bank-strip">
-              <button class="bank-mini nubank"><span>Nu</span><small>Nubank</small><strong class="private-value">R$ 3.240,80</strong></button>
-              <button class="bank-mini inter"><span>in</span><small>Banco Inter</small><strong class="private-value">R$ 1.890,20</strong></button>
-              <button class="bank-mini itau"><span>it</span><small>Itaú</small><strong class="private-value">R$ 546,45</strong></button>
-            </div>
+            <div class="bank-strip" id="bankStrip"><div class="empty-bank">Nenhum banco conectado.</div></div>
             <div class="secure-note">▱ Seus dados são protegidos e você controla as permissões.</div>
           </article>
           <article class="panel upcoming-panel">
             <div class="panel-title"><div><small>AGENDA</small><h2>Próximos pagamentos</h2></div><button class="calendar-chip">Setembro⌄</button></div>
-            <div class="upcoming-list"><div><span class="date-box"><b>29</b>SET</span><span><strong>Fatura Nubank</strong><small>Cartão de crédito</small></span><b class="private-value">R$ 1.284,60</b></div><div><span class="date-box"><b>01</b>OUT</span><span><strong>Aluguel</strong><small>Pagamento recorrente</small></span><b class="private-value">R$ 1.850,00</b></div><div><span class="date-box"><b>03</b>OUT</span><span><strong>Streaming</strong><small>3 assinaturas</small></span><b class="private-value">R$ 89,70</b></div></div>
+            <div class="upcoming-list" id="upcomingList"><div class="empty-bank">Nenhum pagamento importado.</div></div>
           </article>
         </div>
       </section>
@@ -133,16 +129,16 @@
       <section class="view" id="view-planning">
         <div class="section-heading"><div><small>PLANEJAMENTO</small><h2>Seu próximo capítulo</h2><p>Metas, limites e projeções para tomar decisões melhores.</p></div><button class="secondary">＋ Criar meta</button></div>
         <div class="plan-grid">
-          <article class="forecast-card"><small>PROJEÇÃO NEXO</small><h2>Saldo previsto para dezembro</h2><strong class="private-value">R$ 12.480</strong><span>↗ R$ 4.200 nos próximos 90 dias</span><div class="forecast-line"><i></i><b></b><em></em><span></span></div><div class="forecast-months"><span>SET</span><span>OUT</span><span>NOV</span><span>DEZ</span></div></article>
-          <article class="panel budget-list"><div class="panel-title"><div><small>LIMITES</small><h2>Orçamento do mês</h2></div><span>47% utilizado</span></div><div id="budgetList"></div></article>
-          <article class="panel goals"><div class="panel-title"><div><small>SONHOS</small><h2>Metas financeiras</h2></div><button class="link-btn">Ver todas</button></div><div class="goal"><span>🛟</span><div><b>Reserva de emergência</b><small>R$ 8.400 de R$ 15.000</small><i><em style="width:56%"></em></i></div><strong>56%</strong></div><div class="goal"><span>✈️</span><div><b>Viagem para o Chile</b><small>R$ 2.150 de R$ 5.000</small><i><em style="width:43%"></em></i></div><strong>43%</strong></div><div class="goal"><span>💻</span><div><b>Novo notebook</b><small>R$ 900 de R$ 6.000</small><i><em style="width:15%"></em></i></div><strong>15%</strong></div></article>
+          <article class="forecast-card"><small>PROJEÇÃO NEXO</small><h2>Saldo previsto para dezembro</h2><strong class="private-value" id="forecastValue">R$ 0,00</strong><span id="forecastContext">Adicione movimentações para gerar uma projeção</span><div class="forecast-line"><i></i><b></b><em></em><span></span></div><div class="forecast-months"><span>SET</span><span>OUT</span><span>NOV</span><span>DEZ</span></div></article>
+          <article class="panel budget-list"><div class="panel-title"><div><small>LIMITES</small><h2>Orçamento do mês</h2></div><span id="budgetUsage">0% utilizado</span></div><div id="budgetList"></div></article>
+          <article class="panel goals"><div class="panel-title"><div><small>SONHOS</small><h2>Metas financeiras</h2></div><button class="link-btn">Ver todas</button></div><div class="goal"><span>🛟</span><div><b>Reserva de emergência</b><small>R$ 0 de R$ 15.000</small><i><em style="width:0%"></em></i></div><strong>0%</strong></div><div class="goal"><span>✈️</span><div><b>Viagem para o Chile</b><small>R$ 0 de R$ 5.000</small><i><em style="width:0%"></em></i></div><strong>0%</strong></div><div class="goal"><span>💻</span><div><b>Novo notebook</b><small>R$ 0 de R$ 6.000</small><i><em style="width:0%"></em></i></div><strong>0%</strong></div></article>
         </div>
       </section>
 
       <section class="view" id="view-accounts">
         <div class="section-heading"><div><small>OPEN FINANCE</small><h2>Contas e cartões</h2><p>Uma visão unificada, mesmo usando bancos diferentes.</p></div><button class="primary connect-bank">∞ Conectar instituição</button></div>
         <div class="open-finance-hero"><div><span class="open-badge">OPEN FINANCE BRASIL</span><h2>Todos os seus bancos.<br>Uma única visão.</h2><p>Conecte instituições de forma segura e escolha exatamente quais informações deseja compartilhar.</p><button class="white-btn connect-bank">Conectar um novo banco →</button></div><div class="orbit"><span class="orbit-center">N</span><i class="o1">Nu</i><i class="o2">in</i><i class="o3">it</i><i class="o4">+</i></div></div>
-        <div class="account-cards"><article class="account-card purple-bank"><header><span>Nu</span><small>ATUALIZADO AGORA</small></header><p>Conta corrente</p><strong class="private-value">R$ 3.240,80</strong><footer><span>•••• 4821</span><b>Conectado</b></footer></article><article class="account-card orange-bank"><header><span>in</span><small>ATUALIZADO HÁ 2 MIN</small></header><p>Conta digital</p><strong class="private-value">R$ 1.890,20</strong><footer><span>•••• 1904</span><b>Conectado</b></footer></article><article class="account-card blue-bank"><header><span>it</span><small>ATUALIZADO HÁ 5 MIN</small></header><p>Conta corrente</p><strong class="private-value">R$ 546,45</strong><footer><span>•••• 7032</span><b>Conectado</b></footer></article></div>
+        <div class="account-cards" id="accountCards"><div class="empty-accounts"><strong>Nenhuma instituição conectada</strong><span>Use a conexão demonstrativa para importar dados fictícios.</span></div></div>
         <article class="panel permissions"><div><span class="shield">✓</span><div><h3>Você está no controle</h3><p>As conexões podem ser pausadas ou removidas a qualquer momento. Esta tela é uma simulação para apresentação acadêmica.</p></div></div><button class="secondary">Gerenciar permissões</button></article>
       </section>
 
@@ -155,7 +151,7 @@
     </main>
   </div>
 
-  <div class="modal" id="transactionModal" hidden role="dialog" aria-modal="true" aria-labelledby="transactionTitle"><form id="transactionForm"><header><div><small>NOVO REGISTRO</small><h2 id="transactionTitle">Adicionar lançamento</h2></div><button type="button" class="modal-close">×</button></header><div class="type-toggle"><button type="button" class="active" data-type="expense">Despesa</button><button type="button" data-type="income">Receita</button></div><input type="hidden" id="transactionType" value="expense"><label>Descrição<input id="descriptionInput" placeholder="Ex.: Supermercado" required></label><div class="field-row"><label>Valor (R$)<input id="amountInput" placeholder="0,00" required></label><label>Data<input id="dateInput" type="date" required></label></div><label>Categoria<select id="formCategory"><option>Alimentação</option><option>Moradia</option><option>Transporte</option><option>Lazer</option><option>Saúde</option><option>Educação</option><option>Salário</option><option>Freelance</option><option>Outros</option></select></label><p class="form-error" id="formError"></p><footer><button type="button" class="secondary modal-close">Cancelar</button><button class="primary" type="submit">Salvar lançamento</button></footer></form></div>
+  <div class="modal" id="transactionModal" hidden role="dialog" aria-modal="true" aria-labelledby="transactionTitle"><form id="transactionForm"><header><div><small>NOVO REGISTRO</small><h2 id="transactionTitle">Adicionar lançamento</h2></div><button type="button" class="modal-close">×</button></header><div class="type-toggle"><button type="button" class="active" data-type="expense">Despesa</button><button type="button" data-type="income">Receita</button></div><input type="hidden" id="transactionType" value="expense"><label>Descrição<input id="descriptionInput" placeholder="Ex.: Supermercado" required></label><div class="field-row"><label>Valor (R$)<input id="amountInput" placeholder="0,00" required></label><label>Data<input id="dateInput" type="date" required></label></div><div class="field-row"><label>Categoria<select id="formCategory"><option>Alimentação</option><option>Moradia</option><option>Transporte</option><option>Lazer</option><option>Saúde</option><option>Educação</option><option>Salário</option><option>Freelance</option><option>Outros</option></select></label><label>Conta<select id="formAccount"><option value="Manual">Lançamento manual</option></select></label></div><p class="form-error" id="formError"></p><footer><button type="button" class="secondary modal-close">Cancelar</button><button class="primary" type="submit">Salvar lançamento</button></footer></form></div>
 
   <div class="modal" id="bankModal" hidden role="dialog" aria-modal="true" aria-labelledby="bankTitle"><div class="bank-modal-box"><header><div><small>OPEN FINANCE</small><h2 id="bankTitle">Conectar uma instituição</h2></div><button class="bank-close">×</button></header><div class="steps"><span class="active">1</span><i></i><span>2</span><i></i><span>3</span></div><div class="bank-step active" data-step="1"><p>Escolha seu banco para iniciar uma conexão demonstrativa.</p><label class="bank-search">⌕<input id="bankSearch" placeholder="Busque uma instituição"></label><div class="bank-options"><button data-bank="Nubank"><i class="bank-logo nu">Nu</i><span><strong>Nubank</strong><small>Conta e cartão</small></span><b>›</b></button><button data-bank="Banco Inter"><i class="bank-logo bi">in</i><span><strong>Banco Inter</strong><small>Conta e investimentos</small></span><b>›</b></button><button data-bank="Itaú"><i class="bank-logo it">it</i><span><strong>Itaú</strong><small>Conta e cartão</small></span><b>›</b></button><button data-bank="Santander"><i class="bank-logo sa">S</i><span><strong>Santander</strong><small>Conta corrente</small></span><b>›</b></button></div></div><div class="bank-step" data-step="2"><div class="selected-bank"><i id="selectedBankLogo">∞</i><span><small>Instituição selecionada</small><strong id="selectedBankName">Banco</strong></span></div><h3>Você autoriza compartilhar:</h3><label class="permission-row"><span>Saldo e dados da conta<small>Para consolidar seu patrimônio</small></span><input type="checkbox" checked></label><label class="permission-row"><span>Transações dos últimos 12 meses<small>Para classificar seus gastos</small></span><input type="checkbox" checked></label><label class="permission-row"><span>Cartões e faturas<small>Para prever próximos pagamentos</small></span><input type="checkbox" checked></label><div class="consent-note">🔒 Esta é apenas uma simulação. Nenhum dado real será acessado.</div><button class="primary full" id="authorizeBank">Autorizar e continuar</button></div><div class="bank-step success-step" data-step="3"><div class="success-check">✓</div><h2>Conexão demonstrada!</h2><p id="successBankText">A instituição foi conectada ao painel.</p><button class="primary bank-close">Voltar ao painel</button></div></div></div>
 
