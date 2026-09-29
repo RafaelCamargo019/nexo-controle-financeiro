@@ -43,6 +43,7 @@ let selectedBank='';
 let authMode='login';
 let currentView='dashboard';
 let activeGoalId='';
+let pendingConfirmAction=null;
 
 function readJson(key,fallback){try{return JSON.parse(localStorage.getItem(key)||'null')??fallback;}catch{return fallback;}}
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -111,7 +112,7 @@ document.querySelectorAll('.open-transaction').forEach(b=>b.addEventListener('cl
 document.querySelectorAll('.modal-close').forEach(b=>b.addEventListener('click',closeTransaction));
 document.querySelectorAll('.type-toggle button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.type-toggle button').forEach(x=>x.classList.toggle('active',x===b));document.querySelector('#transactionType').value=b.dataset.type;}));
 document.querySelector('#transactionForm').addEventListener('submit',e=>{e.preventDefault();const d=document.querySelector('#descriptionInput').value.trim(),raw=document.querySelector('#amountInput').value.replace('.','').replace(',','.'),amount=Number(raw),date=document.querySelector('#dateInput').value;if(d.length<2||!amount||amount<=0||!date){document.querySelector('#formError').textContent='Preencha descrição, valor e data corretamente.';return;}lastAdded={id:`manual-${Date.now()}`,description:d,category:document.querySelector('#formCategory').value,date,type:document.querySelector('#transactionType').value,amount,account:document.querySelector('#formAccount').value};transactions.push(lastAdded);saveCurrent();renderAll();closeTransaction();e.target.reset();showToast('Lançamento salvo',`${lastAdded.account} foi identificada como a origem.`);});
-document.querySelector('#transactionRows').addEventListener('click',e=>{const b=e.target.closest('[data-delete]');if(!b)return;const item=transactions.find(t=>String(t.id)===b.dataset.delete);if(item&&confirm(`Excluir “${item.description}”?`)){transactions=transactions.filter(t=>t!==item);saveCurrent();renderAll();showToast('Transação excluída','Os totais desta conta foram recalculados.');}});
+document.querySelector('#transactionRows').addEventListener('click',e=>{const b=e.target.closest('[data-delete]');if(!b)return;const item=transactions.find(t=>String(t.id)===b.dataset.delete);if(!item)return;openConfirm('Excluir movimentação?',`“${item.description}” será removida e os totais da conta serão recalculados.`,'Excluir movimentação',()=>{transactions=transactions.filter(t=>t!==item);saveCurrent();renderAll();showToast('Transação excluída','Os totais desta conta foram recalculados.');});});
 document.querySelector('#undoBtn').addEventListener('click',()=>{if(!lastAdded)return;transactions=transactions.filter(t=>t!==lastAdded);saveCurrent();renderAll();lastAdded=null;showToast('Ação desfeita','O lançamento foi removido.');});
 document.querySelector('#exportBtn').addEventListener('click',()=>{const rows=['Descrição,Categoria,Data,Tipo,Conta,Valor',...transactions.map(t=>[t.description,t.category,t.date,t.type,t.account,t.amount.toFixed(2)].map(x=>`"${String(x).replaceAll('"','""')}"`).join(','))],blob=new Blob([rows.join('\n')],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='nexo-transacoes.csv';a.click();URL.revokeObjectURL(a.href);showToast('CSV exportado','Arquivo preparado para download.');});
 
@@ -132,6 +133,12 @@ goalModal.addEventListener('click',event=>{if(event.target===goalModal)closeGoal
 depositModal.addEventListener('click',event=>{if(event.target===depositModal)closeDeposit();});
 
 const bankModal=document.querySelector('#bankModal');
+const confirmModal=document.querySelector('#confirmModal');
+function openConfirm(title,text,label,action){document.querySelector('#confirmTitle').textContent=title;document.querySelector('#confirmText').textContent=text;document.querySelector('#confirmAction').textContent=label;pendingConfirmAction=action;confirmModal.hidden=false;document.body.style.overflow='hidden';setTimeout(()=>document.querySelector('#confirmCancel').focus(),50);}
+function closeConfirm(){confirmModal.hidden=true;document.body.style.overflow='';pendingConfirmAction=null;}
+document.querySelector('#confirmCancel').addEventListener('click',closeConfirm);
+document.querySelector('#confirmAction').addEventListener('click',()=>{const action=pendingConfirmAction;closeConfirm();if(action)action();});
+confirmModal.addEventListener('click',event=>{if(event.target===confirmModal)closeConfirm();});
 function setBankStep(n){document.querySelectorAll('.bank-step').forEach(s=>s.classList.toggle('active',Number(s.dataset.step)===n));document.querySelectorAll('.steps span').forEach((s,i)=>s.classList.toggle('active',i<n));}
 function openBank(){bankModal.hidden=false;document.body.style.overflow='hidden';selectedBank='';setBankStep(1);}
 function closeBank(){bankModal.hidden=true;document.body.style.overflow='';}
@@ -141,7 +148,7 @@ document.querySelectorAll('.bank-close').forEach(b=>b.addEventListener('click',c
 document.querySelectorAll('[data-bank]').forEach(b=>b.addEventListener('click',()=>{selectedBank=b.dataset.bank;document.querySelector('#selectedBankName').textContent=selectedBank;document.querySelector('#selectedBankLogo').textContent=b.querySelector('i').textContent;document.querySelector('#selectedBankLogo').className=b.querySelector('i').className;setBankStep(2);}));
 document.querySelector('#bankSearch').addEventListener('input',e=>document.querySelectorAll('[data-bank]').forEach(b=>b.hidden=!b.dataset.bank.toLowerCase().includes(e.target.value.toLowerCase())));
 document.querySelector('#authorizeBank').addEventListener('click',()=>{connectSelectedBank();setBankStep(3);});
-document.querySelector('#accountCards').addEventListener('click',event=>{const button=event.target.closest('[data-remove-bank]');if(!button)return;const name=button.dataset.removeBank;if(!connectedBanks.includes(name))return;if(!confirm(`Remover ${name}? As movimentações fictícias vinculadas a esta instituição também serão removidas.`))return;connectedBanks=connectedBanks.filter(bank=>bank!==name);transactions=transactions.filter(transaction=>transaction.account!==name);saveCurrent();renderAll();showToast('Instituição removida',`${name} e seus dados fictícios foram retirados desta conta.`);});
+document.querySelector('#accountCards').addEventListener('click',event=>{const button=event.target.closest('[data-remove-bank]');if(!button)return;const name=button.dataset.removeBank;if(!connectedBanks.includes(name))return;openConfirm('Remover instituição?',`${name} e todas as movimentações fictícias vinculadas a ela serão removidas desta conta.`,'Remover instituição',()=>{connectedBanks=connectedBanks.filter(bank=>bank!==name);transactions=transactions.filter(transaction=>transaction.account!==name);saveCurrent();renderAll();showToast('Instituição removida',`${name} e seus dados fictícios foram retirados desta conta.`);});});
 bankModal.addEventListener('click',e=>{if(e.target===bankModal)closeBank();});transactionModal.addEventListener('click',e=>{if(e.target===transactionModal)closeTransaction();});
 function showToast(title,text){const t=document.querySelector('#toast');t.querySelector('strong').textContent=title;t.querySelector('small').textContent=text;t.classList.add('show');clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>t.classList.remove('show'),4200);}
 function askAI(q){
@@ -149,7 +156,7 @@ function askAI(q){
 }
 document.querySelectorAll('[data-question]').forEach(b=>b.addEventListener('click',()=>askAI(b.dataset.question)));
 document.querySelector('#chatForm').addEventListener('submit',e=>{e.preventDefault();const input=document.querySelector('#chatInput');askAI(input.value);input.value='';});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeTransaction();closeBank();closeGoal();closeDeposit();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeTransaction();closeBank();closeGoal();closeDeposit();closeConfirm();}});
 
 applyTheme(localStorage.getItem(THEME_KEY)||'light');
 const sessionEmail=localStorage.getItem(SESSION_KEY);
