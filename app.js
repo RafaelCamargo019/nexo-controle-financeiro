@@ -1,163 +1,1139 @@
-const USERS_KEY='nexo-flow-users-v2';
-const SESSION_KEY='nexo-flow-session-v2';
-const THEME_KEY='nexo-flow-theme-v1';
-const brl=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
-const dateFormat=new Intl.DateTimeFormat('pt-BR',{day:'2-digit',month:'short',year:'numeric'});
-const categoryIcons={'Salário':'▣','Freelance':'✦','Moradia':'⌂','Alimentação':'◇','Saúde':'＋','Transporte':'➜','Lazer':'☆','Educação':'▤','Outros':'○'};
-const limits={Alimentação:1000,Moradia:2200,Transporte:600,Lazer:450,Saúde:400};
-const bankCatalog={
-  'Nubank':{code:'Nu',mini:'nubank',card:'purple-bank',last4:'4821',kind:'Conta e cartão',transactions:[
-    ['Cashback recebido','Outros','2026-09-12','income',58.40],['Supermercado','Alimentação','2026-09-19','expense',426.75],['Academia','Saúde','2026-09-20','expense',99.90],['Fatura do cartão','Outros','2026-09-26','expense',318.20]
-  ],upcoming:[['29','SET','Fatura Nubank','Cartão de crédito',1284.60]]},
-  'Banco Inter':{code:'in',mini:'inter',card:'orange-bank',last4:'1904',kind:'Conta digital',transactions:[
-    ['Salário','Salário','2026-09-05','income',5400],['Projeto freelance','Freelance','2026-09-16','income',780],['Internet residencial','Moradia','2026-09-21','expense',129.90],['Combustível','Transporte','2026-09-23','expense',238.40],['Restaurante','Alimentação','2026-09-25','expense',148.60]
-  ],upcoming:[['03','OUT','Streaming','Assinatura no Banco Inter',89.70]]},
-  'Itaú':{code:'it',mini:'itau',card:'blue-bank',last4:'7032',kind:'Conta corrente',transactions:[
-    ['Salário','Salário','2026-09-05','income',6200],['Aluguel','Moradia','2026-09-08','expense',1850],['Conta de energia','Moradia','2026-09-18','expense',192.35],['Farmácia','Saúde','2026-09-22','expense',84.70]
-  ],upcoming:[['01','OUT','Aluguel','Débito programado no Itaú',1850]]},
-  'Santander':{code:'S',mini:'santander',card:'red-bank',last4:'6318',kind:'Conta corrente',transactions:[
-    ['Pagamento de cliente','Freelance','2026-09-11','income',1200],['Consulta médica','Saúde','2026-09-17','expense',210],['Streaming','Lazer','2026-09-20','expense',89.90],['Restaurante','Alimentação','2026-09-24','expense',162.30]
-  ],upcoming:[['05','OUT','Plano de saúde','Débito no Santander',310]]}
-};
-const demoTransactions=[
-  {id:'demo-1',description:'Salário',category:'Salário',date:'2026-09-05',type:'income',amount:7200,account:'Itaú'},
-  {id:'demo-2',description:'Projeto freelance',category:'Freelance',date:'2026-09-18',type:'income',amount:1350,account:'Banco Inter'},
-  {id:'demo-3',description:'Aluguel',category:'Moradia',date:'2026-09-08',type:'expense',amount:1850,account:'Itaú'},
-  {id:'demo-4',description:'Supermercado',category:'Alimentação',date:'2026-09-23',type:'expense',amount:486.75,account:'Nubank'},
-  {id:'demo-5',description:'Internet residencial',category:'Moradia',date:'2026-09-21',type:'expense',amount:119.90,account:'Banco Inter'},
-  {id:'demo-6',description:'Academia',category:'Saúde',date:'2026-09-20',type:'expense',amount:99.90,account:'Nubank'}
-];
-const demoGoals=[
-  {id:'goal-demo-1',name:'Reserva de emergência',icon:'🛟',target:15000,current:4200},
-  {id:'goal-demo-2',name:'Viagem para o Chile',icon:'✈️',target:5000,current:1850}
-];
-let users=readJson(USERS_KEY,{});
-let currentEmail='';
-let currentProfile=null;
-let transactions=[];
-let connectedBanks=[];
-let goals=[];
-let privateMode=false;
-let lastAdded=null;
-let selectedBank='';
-let authMode='login';
-let currentView='dashboard';
-let activeGoalId='';
-let pendingConfirmAction=null;
+const USERS_KEY = "nexo-flow-users-v2";
+const SESSION_KEY = "nexo-flow-session-v2";
+const THEME_KEY = "nexo-flow-theme-v1";
 
-function readJson(key,fallback){try{return JSON.parse(localStorage.getItem(key)||'null')??fallback;}catch{return fallback;}}
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function money(n){return privateMode?'R$ ••••':brl.format(Number(n)||0);}
-function totals(){const income=transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);const expense=transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);return{income,expense,balance:income-expense};}
-function persistUsers(){localStorage.setItem(USERS_KEY,JSON.stringify(users));}
-function saveCurrent(){if(!currentEmail||!users[currentEmail])return;users[currentEmail].transactions=transactions;users[currentEmail].banks=connectedBanks;users[currentEmail].goals=goals;persistUsers();}
-function loadCurrent(profile){currentProfile=profile;currentEmail=profile.email;transactions=Array.isArray(profile.transactions)?profile.transactions:[];connectedBanks=Array.isArray(profile.banks)?profile.banks:[];goals=Array.isArray(profile.goals)?profile.goals:[];enterApp(profile);renderAll();}
-async function hashPassword(value){const bytes=new TextEncoder().encode(value);const digest=await crypto.subtle.digest('SHA-256',bytes);return [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('');}
-function enterApp(profile){
-  const name=profile.name||'Usuário Nexo';document.querySelector('#loginPage').hidden=true;document.querySelector('#appShell').classList.remove('locked');document.querySelector('#userName').textContent=name;document.querySelector('#userEmail').textContent=profile.email||'Conta local';document.querySelector('#userInitials').textContent=name.split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();showView(currentView);
-}
-function showLogin(){document.querySelector('#appShell').classList.add('locked');document.querySelector('#loginPage').hidden=false;document.querySelector('#authPassword').value='';document.querySelector('#authError').textContent='';}
-function setAuthMode(mode){
-  authMode=mode;const register=mode==='register';document.querySelector('#nameField').hidden=!register;document.querySelector('#authName').required=register;document.querySelector('#authKicker').textContent=register?'PRIMEIRO ACESSO':'BEM-VINDA DE VOLTA';document.querySelector('#authTitle').textContent=register?'Crie sua conta local':'Entre na sua conta';document.querySelector('#authDescription').textContent=register?'Sua conta começa zerada e separada das demais.':'Acesse somente os dados desta conta.';document.querySelector('#authSubmit').textContent=register?'Criar conta':'Entrar';document.querySelector('#switchText').textContent=register?'Já possui uma conta?':'Ainda não tem uma conta?';document.querySelector('#authSwitch').textContent=register?'Entrar':'Criar conta';document.querySelector('#authError').textContent='';
-}
-function renderAll(){
-  const t=totals();document.querySelector('#balanceValue').textContent=money(t.balance);document.querySelector('#incomeValue').textContent=money(t.income);document.querySelector('#expenseValue').textContent=money(t.expense);document.querySelector('#savedValue').textContent=money(Math.max(0,t.balance));document.querySelector('#balanceContext').textContent=transactions.length?`${transactions.length} movimentações nesta conta`:'Comece conectando um banco ou criando um lançamento';document.querySelector('#incomeTag').textContent=t.income?'Atualizado':'Sem dados';document.querySelector('#expenseTag').textContent=t.expense?'Atualizado':'Sem dados';document.querySelector('#savedTag').textContent=t.balance>0?'Saldo positivo':'Início';document.querySelector('#incomeContext').textContent=t.income?`${transactions.filter(x=>x.type==='income').length} receitas registradas`:'Nenhuma receita cadastrada';document.querySelector('#expenseContext').textContent=t.expense?`${transactions.filter(x=>x.type==='expense').length} despesas registradas`:'Nenhuma despesa cadastrada';document.querySelector('#savedContext').textContent=t.balance>0?'Diferença entre receitas e despesas':'Seu saldo positivo aparece aqui';document.querySelector('#chartTotal').textContent=money(t.income);document.querySelector('#forecastValue').textContent=money(Math.max(0,t.balance));document.querySelector('#forecastContext').textContent=transactions.length?'Projeção baseada no saldo atual da conta':'Adicione movimentações para gerar uma projeção';document.querySelector('#aiInsightTitle').textContent=transactions.length?`Seu saldo atual é ${money(t.balance)}`:'Seu painel está pronto para começar';document.querySelector('#aiInsightText').textContent=transactions.length?'A Nexo IA usa somente as movimentações desta conta para criar orientações.':'Conecte um banco fictício para importar movimentações de demonstração.';renderChart();renderTable();renderBudgets();renderGoals();renderSpending();renderBanks();renderUpcoming();renderAccountOptions();
-}
-function renderChart(){
-  const count=Number(document.querySelector('#chartPeriod').value),months=['ABR','MAI','JUN','JUL','AGO','SET'].slice(-count),data=months.map((m,index)=>{const monthNumber=4+(6-count)+index,prefix=`2026-${String(monthNumber).padStart(2,'0')}`;return{m,i:transactions.filter(t=>t.date.startsWith(prefix)&&t.type==='income').reduce((s,t)=>s+t.amount,0),e:transactions.filter(t=>t.date.startsWith(prefix)&&t.type==='expense').reduce((s,t)=>s+t.amount,0)};}),max=Math.max(...data.flatMap(x=>[x.i,x.e]),1);document.querySelector('#cashChart').innerHTML=data.map(x=>`<div class="bar-pair"><i class="income" style="height:${x.i?Math.max(5,x.i/max*92):0}%" title="Receitas ${brl.format(x.i)}"></i><i class="expense" style="height:${x.e?Math.max(5,x.e/max*92):0}%" title="Despesas ${brl.format(x.e)}"></i><span>${x.m}</span></div>`).join('');
-}
-function renderTable(){
-  const q=document.querySelector('#searchInput').value.toLowerCase(),type=document.querySelector('#typeFilter').value,cat=document.querySelector('#categoryFilter').value,list=[...transactions].sort((a,b)=>b.date.localeCompare(a.date)).filter(t=>(t.description.toLowerCase().includes(q)||t.category.toLowerCase().includes(q)||String(t.account).toLowerCase().includes(q))&&(type==='all'||t.type===type)&&(cat==='all'||t.category===cat));document.querySelector('#transactionRows').innerHTML=list.map(t=>`<tr><td><div class="transaction-name"><i>${categoryIcons[t.category]||'○'}</i><span><strong>${esc(t.description)}</strong><small>${t.type==='income'?'Recebimento':'Pagamento'}</small></span></div></td><td>${esc(t.category)}</td><td>${dateFormat.format(new Date(t.date+'T12:00:00'))}</td><td><span class="source-bank">${esc(t.account||'Manual')}</span></td><td class="${t.type==='income'?'amount-income':'amount-expense'}">${privateMode?'R$ ••••':`${t.type==='income'?'+':'−'} ${brl.format(t.amount)}`}</td><td><button class="delete" data-delete="${esc(t.id)}" aria-label="Excluir ${esc(t.description)}">×</button></td></tr>`).join('');document.querySelector('#emptyState').hidden=list.length>0;const select=document.querySelector('#categoryFilter'),selected=select.value;select.innerHTML='<option value="all">Todas as categorias</option>'+Object.keys(categoryIcons).map(c=>`<option${c===selected?' selected':''}>${c}</option>`).join('');
-}
-function renderBudgets(){
-  const spent=transactions.filter(t=>t.type==='expense').reduce((a,t)=>{a[t.category]=(a[t.category]||0)+t.amount;return a;},{}),totalLimit=Object.values(limits).reduce((s,v)=>s+v,0),totalSpent=Object.entries(spent).filter(([c])=>limits[c]).reduce((s,[,v])=>s+v,0);document.querySelector('#budgetUsage').textContent=`${Math.min(100,Math.round(totalSpent/totalLimit*100))}% utilizado`;document.querySelector('#budgetList').innerHTML=Object.entries(limits).map(([c,l])=>{const v=spent[c]||0,p=Math.min(100,Math.round(v/l*100));return`<div class="budget-row"><span>${categoryIcons[c]}</span><div><b>${c}</b><small>${p}% utilizado</small></div><small>${money(v)} / ${privateMode?'••••':brl.format(l)}</small><i><em style="width:${p}%"></em></i></div>`}).join('');
-}
-function renderGoals(){
-  const list=document.querySelector('#goalsList');
-  if(!goals.length){list.innerHTML='<div class="goals-empty"><span>🐷</span><strong>Seu primeiro cofrinho começa aqui</strong><small>Crie uma meta e guarde valores aos poucos.</small><button class="secondary open-goal-inline">Criar primeira meta</button></div>';list.querySelector('.open-goal-inline').addEventListener('click',openGoal);return;}
-  list.innerHTML=goals.map(goal=>{const target=Math.max(Number(goal.target)||0,1),current=Math.max(Number(goal.current)||0,0),progress=Math.min(100,Math.round(current/target*100));return`<div class="goal" data-goal="${esc(goal.id)}"><span>${esc(goal.icon||'🐷')}</span><div><b>${esc(goal.name)}</b><small>${money(current)} de ${money(target)}</small><i><em style="width:${progress}%"></em></i><button class="goal-deposit" data-deposit="${esc(goal.id)}">＋ Guardar dinheiro</button></div><strong>${progress}%</strong></div>`}).join('');
-}
-function renderSpending(){
-  const spent=transactions.filter(t=>t.type==='expense').reduce((a,t)=>{a[t.category]=(a[t.category]||0)+t.amount;return a;},{}),entries=Object.entries(spent).sort((a,b)=>b[1]-a[1]),total=entries.reduce((s,[,v])=>s+v,0);document.querySelector('#spendingTotal').textContent=money(total);if(!total){document.querySelector('#spendingLegend').innerHTML='<p class="empty-inline">Sem despesas para classificar.</p>';document.querySelector('#spendingDonut').style.background='conic-gradient(#ececf3 0 100%)';return;}const colors=['#6d5dfb','#ff765a','#26bfb5','#f1b84b','#8d78ff'];let cursor=0;document.querySelector('#spendingDonut').style.background=`conic-gradient(${entries.slice(0,5).map(([,v],i)=>{const start=cursor;cursor+=v/total*100;return`${colors[i]} ${start}% ${cursor}%`;}).join(',')})`;document.querySelector('#spendingLegend').innerHTML=entries.slice(0,4).map(([c,v],i)=>`<span><i style="background:${colors[i]}"></i><b>${esc(c)}</b><small>${Math.round(v/total*100)}%</small></span>`).join('');
-}
-function bankBalance(name){return transactions.filter(t=>t.account===name).reduce((s,t)=>s+(t.type==='income'?t.amount:-t.amount),0);}
-function renderBanks(){
-  const strip=document.querySelector('#bankStrip'),cards=document.querySelector('#accountCards'),count=document.querySelector('#bankCountLabel');count.textContent=connectedBanks.length?`${connectedBanks.length} ${connectedBanks.length===1?'instituição conectada':'instituições conectadas'}`:'Nenhuma instituição conectada';if(!connectedBanks.length){strip.innerHTML='<div class="empty-bank">Nenhum banco conectado.</div>';cards.innerHTML='<div class="empty-accounts"><strong>Nenhuma instituição conectada</strong><span>Use a conexão demonstrativa para importar dados fictícios.</span></div>';return;}strip.innerHTML=connectedBanks.map(name=>{const b=bankCatalog[name];return`<button class="bank-mini ${b.mini}" data-bank-view="${esc(name)}"><span>${b.code}</span><small>${esc(name)}</small><strong>${money(bankBalance(name))}</strong></button>`}).join('');cards.innerHTML=connectedBanks.map(name=>{const b=bankCatalog[name];return`<article class="account-card ${b.card}"><header><span>${b.code}</span><small>DADOS FICTÍCIOS ATUALIZADOS</small></header><p>${b.kind}</p><strong>${money(bankBalance(name))}</strong><footer><span>•••• ${b.last4}</span><b>Conectado</b></footer><button class="remove-bank" data-remove-bank="${esc(name)}">Remover instituição</button></article>`}).join('');
-}
-function renderUpcoming(){const items=connectedBanks.flatMap(name=>(bankCatalog[name].upcoming||[]).map(x=>[...x,name]));document.querySelector('#upcomingList').innerHTML=items.length?items.slice(0,3).map(([day,month,title,desc,value,bank])=>`<div><span class="date-box"><b>${day}</b>${month}</span><span><strong>${esc(title)}</strong><small>${esc(desc)} · ${esc(bank)}</small></span><b>${money(value)}</b></div>`).join(''):'<div class="empty-bank">Nenhum pagamento importado.</div>';}
-function renderAccountOptions(){const select=document.querySelector('#formAccount'),value=select.value;select.innerHTML='<option value="Manual">Lançamento manual</option>'+connectedBanks.map(name=>`<option${name===value?' selected':''}>${esc(name)}</option>`).join('');}
-function showView(name){currentView=name;document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===`view-${name}`));document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.view===name));const first=(currentProfile?.name||'Usuário').split(' ')[0],titles={dashboard:`Olá, ${first} 👋`,transactions:'Movimentações',planning:'Planejamento',accounts:'Open Finance',ai:'Nexo IA'};document.querySelector('#pageTitle').textContent=titles[name];document.querySelector('#sidebar').classList.remove('open');window.scrollTo({top:0,behavior:'smooth'});}
-
-document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
-document.querySelectorAll('[data-view-link]').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.viewLink)));
-document.querySelector('#menuBtn').addEventListener('click',()=>document.querySelector('#sidebar').classList.toggle('open'));
-document.querySelector('#authSwitch').addEventListener('click',()=>setAuthMode(authMode==='login'?'register':'login'));
-document.querySelector('#showPassword').addEventListener('click',()=>{const input=document.querySelector('#authPassword');input.type=input.type==='password'?'text':'password';});
-document.querySelector('#forgotBtn').addEventListener('click',()=>{document.querySelector('#authError').textContent='Neste protótipo, crie uma nova conta ou use a demonstração.';});
-document.querySelector('#loginForm').addEventListener('submit',async e=>{
-  e.preventDefault();const email=document.querySelector('#authEmail').value.trim().toLowerCase(),password=document.querySelector('#authPassword').value,name=document.querySelector('#authName').value.trim(),error=document.querySelector('#authError'),submit=document.querySelector('#authSubmit');if(!email.includes('@')||password.length<4||(authMode==='register'&&name.length<2)){error.textContent='Confira o nome, o e-mail e a senha de pelo menos 4 caracteres.';return;}submit.disabled=true;const passwordHash=await hashPassword(password);submit.disabled=false;if(authMode==='register'){if(users[email]){error.textContent='Já existe uma conta com este e-mail. Entre com sua senha.';return;}const profile={name,email,passwordHash,transactions:[],banks:[],goals:[],createdAt:new Date().toISOString()};users[email]=profile;persistUsers();localStorage.setItem(SESSION_KEY,email);loadCurrent(profile);showToast('Conta criada','Seu painel começou zerado e separado das demais contas.');return;}const profile=users[email];if(!profile||profile.passwordHash!==passwordHash){error.textContent='E-mail ou senha incorretos. Você também pode acessar a demonstração.';return;}localStorage.setItem(SESSION_KEY,email);loadCurrent(profile);
+// Formata valores e datas no padrão usado no Brasil.
+const brl = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
 });
-document.querySelector('#demoLogin').addEventListener('click',async()=>{const email='demo@nexoflow.com',profile={name:'Marina Costa',email,passwordHash:await hashPassword('1234'),transactions:structuredClone(demoTransactions),banks:['Nubank','Banco Inter','Itaú'],goals:structuredClone(demoGoals),demo:true};users[email]=profile;persistUsers();localStorage.setItem(SESSION_KEY,email);loadCurrent(profile);showToast('Demonstração aberta','Esta conta usa somente informações fictícias.');});
-document.querySelector('#logoutBtn').addEventListener('click',()=>{saveCurrent();localStorage.removeItem(SESSION_KEY);currentEmail='';currentProfile=null;transactions=[];connectedBanks=[];goals=[];currentView='dashboard';showLogin();setAuthMode('login');});
-document.querySelector('#privacyBtn').addEventListener('click',()=>{privateMode=!privateMode;const button=document.querySelector('#privacyBtn');button.textContent=privateMode?'◎':'◉';button.setAttribute('aria-label',privateMode?'Mostrar valores':'Ocultar valores');button.title=privateMode?'Mostrar valores':'Ocultar valores';renderAll();showToast(privateMode?'Valores ocultos':'Valores visíveis',privateMode?'Os números financeiros foram protegidos nesta tela.':'Os números financeiros voltaram a aparecer.');});
-function applyTheme(theme){const dark=theme==='dark';document.documentElement.dataset.theme=dark?'dark':'light';const button=document.querySelector('#themeBtn');button.textContent=dark?'☀':'☾';button.setAttribute('aria-label',dark?'Ativar tema claro':'Ativar tema escuro');button.title=dark?'Ativar tema claro':'Ativar tema escuro';document.querySelector('meta[name="theme-color"]').content=dark?'#090b12':'#f4f6fb';}
-document.querySelector('#themeBtn').addEventListener('click',()=>{const next=document.documentElement.dataset.theme==='dark'?'light':'dark';localStorage.setItem(THEME_KEY,next);applyTheme(next);showToast(next==='dark'?'Tema escuro ativado':'Tema claro ativado','A preferência foi salva neste navegador.');});
-document.querySelector('#chartPeriod').addEventListener('change',renderChart);
-['searchInput','typeFilter','categoryFilter'].forEach(id=>document.querySelector(`#${id}`).addEventListener(id==='searchInput'?'input':'change',renderTable));
+const dateFormat = new Intl.DateTimeFormat("pt-BR", {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+});
+const categoryIcons = {
+  Salário: "▣",
+  Freelance: "✦",
+  Moradia: "⌂",
+  Alimentação: "◇",
+  Saúde: "＋",
+  Transporte: "➜",
+  Lazer: "☆",
+  Educação: "▤",
+  Outros: "○",
+};
+const limits = {
+  Alimentação: 1000,
+  Moradia: 2200,
+  Transporte: 600,
+  Lazer: 450,
+  Saúde: 400,
+};
 
-const transactionModal=document.querySelector('#transactionModal');
-function openTransaction(){transactionModal.hidden=false;document.body.style.overflow='hidden';document.querySelector('#dateInput').value='2026-09-28';setTimeout(()=>document.querySelector('#descriptionInput').focus(),50);}
-function closeTransaction(){transactionModal.hidden=true;document.body.style.overflow='';}
-document.querySelectorAll('.open-transaction').forEach(b=>b.addEventListener('click',openTransaction));
-document.querySelectorAll('.modal-close').forEach(b=>b.addEventListener('click',closeTransaction));
-document.querySelectorAll('.type-toggle button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.type-toggle button').forEach(x=>x.classList.toggle('active',x===b));document.querySelector('#transactionType').value=b.dataset.type;}));
-document.querySelector('#transactionForm').addEventListener('submit',e=>{e.preventDefault();const d=document.querySelector('#descriptionInput').value.trim(),raw=document.querySelector('#amountInput').value.replace('.','').replace(',','.'),amount=Number(raw),date=document.querySelector('#dateInput').value;if(d.length<2||!amount||amount<=0||!date){document.querySelector('#formError').textContent='Preencha descrição, valor e data corretamente.';return;}lastAdded={id:`manual-${Date.now()}`,description:d,category:document.querySelector('#formCategory').value,date,type:document.querySelector('#transactionType').value,amount,account:document.querySelector('#formAccount').value};transactions.push(lastAdded);saveCurrent();renderAll();closeTransaction();e.target.reset();showToast('Lançamento salvo',`${lastAdded.account} foi identificada como a origem.`);});
-document.querySelector('#transactionRows').addEventListener('click',e=>{const b=e.target.closest('[data-delete]');if(!b)return;const item=transactions.find(t=>String(t.id)===b.dataset.delete);if(!item)return;openConfirm('Excluir movimentação?',`“${item.description}” será removida e os totais da conta serão recalculados.`,'Excluir movimentação',()=>{transactions=transactions.filter(t=>t!==item);saveCurrent();renderAll();showToast('Transação excluída','Os totais desta conta foram recalculados.');});});
-document.querySelector('#undoBtn').addEventListener('click',()=>{if(!lastAdded)return;transactions=transactions.filter(t=>t!==lastAdded);saveCurrent();renderAll();lastAdded=null;showToast('Ação desfeita','O lançamento foi removido.');});
-document.querySelector('#exportBtn').addEventListener('click',()=>{const rows=['Descrição,Categoria,Data,Tipo,Conta,Valor',...transactions.map(t=>[t.description,t.category,t.date,t.type,t.account,t.amount.toFixed(2)].map(x=>`"${String(x).replaceAll('"','""')}"`).join(','))],blob=new Blob([rows.join('\n')],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='nexo-transacoes.csv';a.click();URL.revokeObjectURL(a.href);showToast('CSV exportado','Arquivo preparado para download.');});
+// Catálogo fictício usado para demonstrar o fluxo de conexão bancária.
+// Não existe comunicação com bancos ou com uma API de Open Finance.
+const bankCatalog = {
+  Nubank: {
+    code: "Nu",
+    mini: "nubank",
+    card: "purple-bank",
+    last4: "4821",
+    kind: "Conta e cartão",
+    transactions: [
+      ["Cashback recebido", "Outros", "2026-09-12", "income", 58.4],
+      ["Supermercado", "Alimentação", "2026-09-19", "expense", 426.75],
+      ["Academia", "Saúde", "2026-09-20", "expense", 99.9],
+      ["Fatura do cartão", "Outros", "2026-09-26", "expense", 318.2],
+    ],
+    upcoming: [["29", "SET", "Fatura Nubank", "Cartão de crédito", 1284.6]],
+  },
+  "Banco Inter": {
+    code: "in",
+    mini: "inter",
+    card: "orange-bank",
+    last4: "1904",
+    kind: "Conta digital",
+    transactions: [
+      ["Salário", "Salário", "2026-09-05", "income", 5400],
+      ["Projeto freelance", "Freelance", "2026-09-16", "income", 780],
+      ["Internet residencial", "Moradia", "2026-09-21", "expense", 129.9],
+      ["Combustível", "Transporte", "2026-09-23", "expense", 238.4],
+      ["Restaurante", "Alimentação", "2026-09-25", "expense", 148.6],
+    ],
+    upcoming: [["03", "OUT", "Streaming", "Assinatura no Banco Inter", 89.7]],
+  },
+  Itaú: {
+    code: "it",
+    mini: "itau",
+    card: "blue-bank",
+    last4: "7032",
+    kind: "Conta corrente",
+    transactions: [
+      ["Salário", "Salário", "2026-09-05", "income", 6200],
+      ["Aluguel", "Moradia", "2026-09-08", "expense", 1850],
+      ["Conta de energia", "Moradia", "2026-09-18", "expense", 192.35],
+      ["Farmácia", "Saúde", "2026-09-22", "expense", 84.7],
+    ],
+    upcoming: [["01", "OUT", "Aluguel", "Débito programado no Itaú", 1850]],
+  },
+  Santander: {
+    code: "S",
+    mini: "santander",
+    card: "red-bank",
+    last4: "6318",
+    kind: "Conta corrente",
+    transactions: [
+      ["Pagamento de cliente", "Freelance", "2026-09-11", "income", 1200],
+      ["Consulta médica", "Saúde", "2026-09-17", "expense", 210],
+      ["Streaming", "Lazer", "2026-09-20", "expense", 89.9],
+      ["Restaurante", "Alimentação", "2026-09-24", "expense", 162.3],
+    ],
+    upcoming: [["05", "OUT", "Plano de saúde", "Débito no Santander", 310]],
+  },
+};
 
-function parseCurrency(value){return Number(String(value).trim().replace(/\./g,'').replace(',','.'));}
-const goalModal=document.querySelector('#goalModal');
-const depositModal=document.querySelector('#depositModal');
-function openGoal(){goalModal.hidden=false;document.body.style.overflow='hidden';document.querySelector('#goalError').textContent='';setTimeout(()=>document.querySelector('#goalName').focus(),50);}
-function closeGoal(){goalModal.hidden=true;document.body.style.overflow='';document.querySelector('#goalForm').reset();}
-function openDeposit(id){const goal=goals.find(item=>String(item.id)===String(id));if(!goal)return;activeGoalId=goal.id;document.querySelector('#depositGoalName').textContent=`Você está guardando para: ${goal.name}`;document.querySelector('#depositError').textContent='';depositModal.hidden=false;document.body.style.overflow='hidden';setTimeout(()=>document.querySelector('#depositAmount').focus(),50);}
-function closeDeposit(){depositModal.hidden=true;document.body.style.overflow='';document.querySelector('#depositForm').reset();activeGoalId='';}
-document.querySelectorAll('.open-goal').forEach(button=>button.addEventListener('click',openGoal));
-document.querySelectorAll('.goal-close').forEach(button=>button.addEventListener('click',closeGoal));
-document.querySelectorAll('.deposit-close').forEach(button=>button.addEventListener('click',closeDeposit));
-document.querySelector('#goalsList').addEventListener('click',event=>{const button=event.target.closest('[data-deposit]');if(button)openDeposit(button.dataset.deposit);});
-document.querySelector('#goalForm').addEventListener('submit',event=>{event.preventDefault();const name=document.querySelector('#goalName').value.trim(),target=parseCurrency(document.querySelector('#goalTarget').value),initial=parseCurrency(document.querySelector('#goalInitial').value||'0'),error=document.querySelector('#goalError');if(name.length<2||!target||target<=0||Number.isNaN(initial)||initial<0){error.textContent='Informe um nome e um objetivo maior que zero.';return;}goals.push({id:`goal-${Date.now()}`,name,icon:document.querySelector('#goalIcon').value,target,current:Math.min(initial,target)});saveCurrent();renderGoals();closeGoal();showToast('Cofrinho criado',`${name} já aparece no seu planejamento.`);});
-document.querySelector('#depositForm').addEventListener('submit',event=>{event.preventDefault();const amount=parseCurrency(document.querySelector('#depositAmount').value),goal=goals.find(item=>String(item.id)===String(activeGoalId)),error=document.querySelector('#depositError');if(!goal||!amount||amount<=0){error.textContent='Informe um valor maior que zero.';return;}goal.current=Math.min(Number(goal.target),Number(goal.current||0)+amount);const completed=goal.current>=goal.target;saveCurrent();renderGoals();closeDeposit();showToast(completed?'Meta alcançada!':'Valor guardado',completed?`${goal.name} chegou a 100%.`:`O cofrinho ${goal.name} foi atualizado.`);});
-goalModal.addEventListener('click',event=>{if(event.target===goalModal)closeGoal();});
-depositModal.addEventListener('click',event=>{if(event.target===depositModal)closeDeposit();});
+// A conta de demonstração começa preenchida para facilitar a apresentação.
+const demoTransactions = [
+  {
+    id: "demo-1",
+    description: "Salário",
+    category: "Salário",
+    date: "2026-09-05",
+    type: "income",
+    amount: 7200,
+    account: "Itaú",
+  },
+  {
+    id: "demo-2",
+    description: "Projeto freelance",
+    category: "Freelance",
+    date: "2026-09-18",
+    type: "income",
+    amount: 1350,
+    account: "Banco Inter",
+  },
+  {
+    id: "demo-3",
+    description: "Aluguel",
+    category: "Moradia",
+    date: "2026-09-08",
+    type: "expense",
+    amount: 1850,
+    account: "Itaú",
+  },
+  {
+    id: "demo-4",
+    description: "Supermercado",
+    category: "Alimentação",
+    date: "2026-09-23",
+    type: "expense",
+    amount: 486.75,
+    account: "Nubank",
+  },
+  {
+    id: "demo-5",
+    description: "Internet residencial",
+    category: "Moradia",
+    date: "2026-09-21",
+    type: "expense",
+    amount: 119.9,
+    account: "Banco Inter",
+  },
+  {
+    id: "demo-6",
+    description: "Academia",
+    category: "Saúde",
+    date: "2026-09-20",
+    type: "expense",
+    amount: 99.9,
+    account: "Nubank",
+  },
+];
+const demoGoals = [
+  {
+    id: "goal-demo-1",
+    name: "Reserva de emergência",
+    icon: "🛟",
+    target: 15000,
+    current: 4200,
+  },
+  {
+    id: "goal-demo-2",
+    name: "Viagem para o Chile",
+    icon: "✈️",
+    target: 5000,
+    current: 1850,
+  },
+];
 
-const bankModal=document.querySelector('#bankModal');
-const confirmModal=document.querySelector('#confirmModal');
-function openConfirm(title,text,label,action){document.querySelector('#confirmTitle').textContent=title;document.querySelector('#confirmText').textContent=text;document.querySelector('#confirmAction').textContent=label;pendingConfirmAction=action;confirmModal.hidden=false;document.body.style.overflow='hidden';setTimeout(()=>document.querySelector('#confirmCancel').focus(),50);}
-function closeConfirm(){confirmModal.hidden=true;document.body.style.overflow='';pendingConfirmAction=null;}
-document.querySelector('#confirmCancel').addEventListener('click',closeConfirm);
-document.querySelector('#confirmAction').addEventListener('click',()=>{const action=pendingConfirmAction;closeConfirm();if(action)action();});
-confirmModal.addEventListener('click',event=>{if(event.target===confirmModal)closeConfirm();});
-function setBankStep(n){document.querySelectorAll('.bank-step').forEach(s=>s.classList.toggle('active',Number(s.dataset.step)===n));document.querySelectorAll('.steps span').forEach((s,i)=>s.classList.toggle('active',i<n));}
-function openBank(){bankModal.hidden=false;document.body.style.overflow='hidden';selectedBank='';setBankStep(1);}
-function closeBank(){bankModal.hidden=true;document.body.style.overflow='';}
-function connectSelectedBank(){if(!selectedBank||!bankCatalog[selectedBank])return;if(connectedBanks.includes(selectedBank)){document.querySelector('#successBankText').textContent=`${selectedBank} já está conectado a esta conta.`;return;}const stamp=Date.now();connectedBanks.push(selectedBank);bankCatalog[selectedBank].transactions.forEach((t,i)=>transactions.push({id:`bank-${stamp}-${i}`,description:t[0],category:t[1],date:t[2],type:t[3],amount:t[4],account:selectedBank,imported:true}));saveCurrent();renderAll();document.querySelector('#successBankText').textContent=`${selectedBank} foi conectado e ${bankCatalog[selectedBank].transactions.length} movimentações fictícias foram importadas.`;showToast('Banco conectado',`Os lançamentos aparecem identificados como ${selectedBank}.`);}
-document.querySelectorAll('.connect-bank').forEach(b=>b.addEventListener('click',openBank));
-document.querySelectorAll('.bank-close').forEach(b=>b.addEventListener('click',closeBank));
-document.querySelectorAll('[data-bank]').forEach(b=>b.addEventListener('click',()=>{selectedBank=b.dataset.bank;document.querySelector('#selectedBankName').textContent=selectedBank;document.querySelector('#selectedBankLogo').textContent=b.querySelector('i').textContent;document.querySelector('#selectedBankLogo').className=b.querySelector('i').className;setBankStep(2);}));
-document.querySelector('#bankSearch').addEventListener('input',e=>document.querySelectorAll('[data-bank]').forEach(b=>b.hidden=!b.dataset.bank.toLowerCase().includes(e.target.value.toLowerCase())));
-document.querySelector('#authorizeBank').addEventListener('click',()=>{connectSelectedBank();setBankStep(3);});
-document.querySelector('#accountCards').addEventListener('click',event=>{const button=event.target.closest('[data-remove-bank]');if(!button)return;const name=button.dataset.removeBank;if(!connectedBanks.includes(name))return;openConfirm('Remover instituição?',`${name} e todas as movimentações fictícias vinculadas a ela serão removidas desta conta.`,'Remover instituição',()=>{connectedBanks=connectedBanks.filter(bank=>bank!==name);transactions=transactions.filter(transaction=>transaction.account!==name);saveCurrent();renderAll();showToast('Instituição removida',`${name} e seus dados fictícios foram retirados desta conta.`);});});
-bankModal.addEventListener('click',e=>{if(e.target===bankModal)closeBank();});transactionModal.addEventListener('click',e=>{if(e.target===transactionModal)closeTransaction();});
-function showToast(title,text){const t=document.querySelector('#toast');t.querySelector('strong').textContent=title;t.querySelector('small').textContent=text;t.classList.add('show');clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>t.classList.remove('show'),4200);}
-function askAI(q){
-  if(!q.trim())return;const t=totals(),spent=transactions.filter(x=>x.type==='expense').reduce((a,x)=>{a[x.category]=(a[x.category]||0)+x.amount;return a;},{}),top=Object.entries(spent).sort((a,b)=>b[1]-a[1])[0],answer=!transactions.length?'Ainda não há movimentações nesta conta. Conecte um banco fictício ou adicione um lançamento para receber uma análise.':q==='Onde estou gastando mais?'&&top?`Sua maior categoria é ${top[0]}, com ${brl.format(top[1])} em despesas.`:q==='Posso comprar um notebook?'?`Seu saldo atual é ${brl.format(t.balance)}. Compare esse valor com o preço do notebook e preserve uma reserva para despesas essenciais.`:q==='Como economizar R$ 500?'?'Defina um limite semanal e revise primeiro a categoria com maior gasto. O painel continuará recalculando o saldo desta conta.':`Nesta conta, as receitas somam ${brl.format(t.income)} e as despesas ${brl.format(t.expense)}.`;const messages=document.querySelector('#messages');messages.insertAdjacentHTML('beforeend',`<div class="message user-message"><p>${esc(q)}</p></div>`);messages.insertAdjacentHTML('beforeend',`<div class="message ai-message"><span>✦</span><p>${esc(answer)}</p></div>`);messages.scrollTop=messages.scrollHeight;
+// Os dados de cada conta ficam separados no localStorage do navegador.
+let users = readJson(USERS_KEY, {});
+let currentEmail = "";
+let currentProfile = null;
+let transactions = [];
+let connectedBanks = [];
+let goals = [];
+let privateMode = false;
+let lastAdded = null;
+let selectedBank = "";
+let authMode = "login";
+let currentView = "dashboard";
+let activeGoalId = "";
+let pendingConfirmAction = null;
+
+function readJson(key, fallback) {
+  try {
+    return JSON.parse(localStorage.getItem(key) || "null") ?? fallback;
+  } catch {
+    return fallback;
+  }
 }
-document.querySelectorAll('[data-question]').forEach(b=>b.addEventListener('click',()=>askAI(b.dataset.question)));
-document.querySelector('#chatForm').addEventListener('submit',e=>{e.preventDefault();const input=document.querySelector('#chatInput');askAI(input.value);input.value='';});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeTransaction();closeBank();closeGoal();closeDeposit();closeConfirm();}});
+function esc(s) {
+  return String(s).replace(
+    /[&<>"']/g,
+    (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        c
+      ],
+  );
+}
+function money(n) {
+  return privateMode ? "R$ ••••" : brl.format(Number(n) || 0);
+}
+function totals() {
+  const income = transactions
+    .filter((t) => t.type === "income")
+    .reduce((s, t) => s + t.amount, 0);
+  const expense = transactions
+    .filter((t) => t.type === "expense")
+    .reduce((s, t) => s + t.amount, 0);
+  return { income, expense, balance: income - expense };
+}
+function persistUsers() {
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+}
+function saveCurrent() {
+  if (!currentEmail || !users[currentEmail]) return;
+  users[currentEmail].transactions = transactions;
+  users[currentEmail].banks = connectedBanks;
+  users[currentEmail].goals = goals;
+  persistUsers();
+}
+function loadCurrent(profile) {
+  currentProfile = profile;
+  currentEmail = profile.email;
+  transactions = Array.isArray(profile.transactions)
+    ? profile.transactions
+    : [];
+  connectedBanks = Array.isArray(profile.banks) ? profile.banks : [];
+  goals = Array.isArray(profile.goals) ? profile.goals : [];
+  enterApp(profile);
+  renderAll();
+}
+async function hashPassword(value) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(digest)]
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+function enterApp(profile) {
+  const name = profile.name || "Usuário Nexo";
+  document.querySelector("#loginPage").hidden = true;
+  document.querySelector("#appShell").classList.remove("locked");
+  document.querySelector("#userName").textContent = name;
+  document.querySelector("#userEmail").textContent =
+    profile.email || "Conta local";
+  document.querySelector("#userInitials").textContent = name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((x) => x[0])
+    .join("")
+    .toUpperCase();
+  document.querySelector("#dateLabel").textContent = new Intl.DateTimeFormat(
+    "pt-BR",
+    { day: "2-digit", month: "long", year: "numeric" },
+  )
+    .format(new Date())
+    .toUpperCase();
+  showView(currentView);
+}
+function showLogin() {
+  document.querySelector("#appShell").classList.add("locked");
+  document.querySelector("#loginPage").hidden = false;
+  document.querySelector("#authPassword").value = "";
+  document.querySelector("#authError").textContent = "";
+}
+function setAuthMode(mode) {
+  authMode = mode;
+  const register = mode === "register";
+  document.querySelector("#nameField").hidden = !register;
+  document.querySelector("#authName").required = register;
+  document.querySelector("#authKicker").textContent = register
+    ? "PRIMEIRO ACESSO"
+    : "BEM-VINDA DE VOLTA";
+  document.querySelector("#authTitle").textContent = register
+    ? "Crie sua conta local"
+    : "Entre na sua conta";
+  document.querySelector("#authDescription").textContent = register
+    ? "Sua conta começa zerada e separada das demais."
+    : "Acesse somente os dados desta conta.";
+  document.querySelector("#authSubmit").textContent = register
+    ? "Criar conta"
+    : "Entrar";
+  document.querySelector("#switchText").textContent = register
+    ? "Já possui uma conta?"
+    : "Ainda não tem uma conta?";
+  document.querySelector("#authSwitch").textContent = register
+    ? "Entrar"
+    : "Criar conta";
+  document.querySelector("#authError").textContent = "";
+}
+function renderAll() {
+  const t = totals();
+  document.querySelector("#balanceValue").textContent = money(t.balance);
+  document.querySelector("#incomeValue").textContent = money(t.income);
+  document.querySelector("#expenseValue").textContent = money(t.expense);
+  document.querySelector("#savedValue").textContent = money(
+    Math.max(0, t.balance),
+  );
+  document.querySelector("#balanceContext").textContent = transactions.length
+    ? `${transactions.length} movimentações nesta conta`
+    : "Comece conectando um banco ou criando um lançamento";
+  document.querySelector("#incomeTag").textContent = t.income
+    ? "Atualizado"
+    : "Sem dados";
+  document.querySelector("#expenseTag").textContent = t.expense
+    ? "Atualizado"
+    : "Sem dados";
+  document.querySelector("#savedTag").textContent =
+    t.balance > 0 ? "Saldo positivo" : "Início";
+  document.querySelector("#incomeContext").textContent = t.income
+    ? `${transactions.filter((x) => x.type === "income").length} receitas registradas`
+    : "Nenhuma receita cadastrada";
+  document.querySelector("#expenseContext").textContent = t.expense
+    ? `${transactions.filter((x) => x.type === "expense").length} despesas registradas`
+    : "Nenhuma despesa cadastrada";
+  document.querySelector("#savedContext").textContent =
+    t.balance > 0
+      ? "Diferença entre receitas e despesas"
+      : "Seu saldo positivo aparece aqui";
+  document.querySelector("#chartTotal").textContent = money(t.income);
+  document.querySelector("#forecastValue").textContent = money(
+    Math.max(0, t.balance),
+  );
+  document.querySelector("#forecastContext").textContent = transactions.length
+    ? "Projeção baseada no saldo atual da conta"
+    : "Adicione movimentações para gerar uma projeção";
+  document.querySelector("#aiInsightTitle").textContent = transactions.length
+    ? `Seu saldo atual é ${money(t.balance)}`
+    : "Seu painel está pronto para começar";
+  document.querySelector("#aiInsightText").textContent = transactions.length
+    ? "A Nexo IA usa somente as movimentações desta conta para criar orientações."
+    : "Conecte um banco fictício para importar movimentações de demonstração.";
+  renderChart();
+  renderTable();
+  renderBudgets();
+  renderGoals();
+  renderSpending();
+  renderBanks();
+  renderUpcoming();
+  renderAccountOptions();
+}
+function renderChart() {
+  // O histórico de abril a setembro faz parte do cenário fictício da apresentação.
+  const count = Number(document.querySelector("#chartPeriod").value),
+    months = ["ABR", "MAI", "JUN", "JUL", "AGO", "SET"].slice(-count),
+    data = months.map((m, index) => {
+      const monthNumber = 4 + (6 - count) + index,
+        prefix = `2026-${String(monthNumber).padStart(2, "0")}`;
+      return {
+        m,
+        i: transactions
+          .filter((t) => t.date.startsWith(prefix) && t.type === "income")
+          .reduce((s, t) => s + t.amount, 0),
+        e: transactions
+          .filter((t) => t.date.startsWith(prefix) && t.type === "expense")
+          .reduce((s, t) => s + t.amount, 0),
+      };
+    }),
+    max = Math.max(...data.flatMap((x) => [x.i, x.e]), 1);
+  document.querySelector("#cashChart").innerHTML = data
+    .map(
+      (x) =>
+        `<div class="bar-pair"><i class="income" style="height:${x.i ? Math.max(5, (x.i / max) * 92) : 0}%" title="Receitas ${brl.format(x.i)}"></i><i class="expense" style="height:${x.e ? Math.max(5, (x.e / max) * 92) : 0}%" title="Despesas ${brl.format(x.e)}"></i><span>${x.m}</span></div>`,
+    )
+    .join("");
+}
+function renderTable() {
+  const q = document.querySelector("#searchInput").value.toLowerCase(),
+    type = document.querySelector("#typeFilter").value,
+    cat = document.querySelector("#categoryFilter").value,
+    list = [...transactions]
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .filter(
+        (t) =>
+          (t.description.toLowerCase().includes(q) ||
+            t.category.toLowerCase().includes(q) ||
+            String(t.account).toLowerCase().includes(q)) &&
+          (type === "all" || t.type === type) &&
+          (cat === "all" || t.category === cat),
+      );
+  document.querySelector("#transactionRows").innerHTML = list
+    .map(
+      (t) =>
+        `<tr><td><div class="transaction-name"><i>${categoryIcons[t.category] || "○"}</i><span><strong>${esc(t.description)}</strong><small>${t.type === "income" ? "Recebimento" : "Pagamento"}</small></span></div></td><td>${esc(t.category)}</td><td>${dateFormat.format(new Date(t.date + "T12:00:00"))}</td><td><span class="source-bank">${esc(t.account || "Manual")}</span></td><td class="${t.type === "income" ? "amount-income" : "amount-expense"}">${privateMode ? "R$ ••••" : `${t.type === "income" ? "+" : "−"} ${brl.format(t.amount)}`}</td><td><button class="delete" data-delete="${esc(t.id)}" aria-label="Excluir ${esc(t.description)}">×</button></td></tr>`,
+    )
+    .join("");
+  document.querySelector("#emptyState").hidden = list.length > 0;
+  const select = document.querySelector("#categoryFilter"),
+    selected = select.value;
+  select.innerHTML =
+    '<option value="all">Todas as categorias</option>' +
+    Object.keys(categoryIcons)
+      .map((c) => `<option${c === selected ? " selected" : ""}>${c}</option>`)
+      .join("");
+}
+function renderBudgets() {
+  const spent = transactions
+      .filter((t) => t.type === "expense")
+      .reduce((a, t) => {
+        a[t.category] = (a[t.category] || 0) + t.amount;
+        return a;
+      }, {}),
+    totalLimit = Object.values(limits).reduce((s, v) => s + v, 0),
+    totalSpent = Object.entries(spent)
+      .filter(([c]) => limits[c])
+      .reduce((s, [, v]) => s + v, 0);
+  document.querySelector("#budgetUsage").textContent =
+    `${Math.min(100, Math.round((totalSpent / totalLimit) * 100))}% utilizado`;
+  document.querySelector("#budgetList").innerHTML = Object.entries(limits)
+    .map(([c, l]) => {
+      const v = spent[c] || 0,
+        p = Math.min(100, Math.round((v / l) * 100));
+      return `<div class="budget-row"><span>${categoryIcons[c]}</span><div><b>${c}</b><small>${p}% utilizado</small></div><small>${money(v)} / ${privateMode ? "••••" : brl.format(l)}</small><i><em style="width:${p}%"></em></i></div>`;
+    })
+    .join("");
+}
+function renderGoals() {
+  const list = document.querySelector("#goalsList");
+  if (!goals.length) {
+    list.innerHTML =
+      '<div class="goals-empty"><span>🐷</span><strong>Seu primeiro cofrinho começa aqui</strong><small>Crie uma meta e guarde valores aos poucos.</small><button class="secondary open-goal-inline">Criar primeira meta</button></div>';
+    list.querySelector(".open-goal-inline").addEventListener("click", openGoal);
+    return;
+  }
+  list.innerHTML = goals
+    .map((goal) => {
+      const target = Math.max(Number(goal.target) || 0, 1),
+        current = Math.max(Number(goal.current) || 0, 0),
+        progress = Math.min(100, Math.round((current / target) * 100));
+      return `<div class="goal" data-goal="${esc(goal.id)}"><span>${esc(goal.icon || "🐷")}</span><div><b>${esc(goal.name)}</b><small>${money(current)} de ${money(target)}</small><i><em style="width:${progress}%"></em></i><button class="goal-deposit" data-deposit="${esc(goal.id)}">＋ Guardar dinheiro</button></div><strong>${progress}%</strong></div>`;
+    })
+    .join("");
+}
+function renderSpending() {
+  const spent = transactions
+      .filter((t) => t.type === "expense")
+      .reduce((a, t) => {
+        a[t.category] = (a[t.category] || 0) + t.amount;
+        return a;
+      }, {}),
+    entries = Object.entries(spent).sort((a, b) => b[1] - a[1]),
+    total = entries.reduce((s, [, v]) => s + v, 0);
+  document.querySelector("#spendingTotal").textContent = money(total);
+  if (!total) {
+    document.querySelector("#spendingLegend").innerHTML =
+      '<p class="empty-inline">Sem despesas para classificar.</p>';
+    document.querySelector("#spendingDonut").style.background =
+      "conic-gradient(#ececf3 0 100%)";
+    return;
+  }
+  const colors = ["#6d5dfb", "#ff765a", "#26bfb5", "#f1b84b", "#8d78ff"];
+  let cursor = 0;
+  document.querySelector("#spendingDonut").style.background =
+    `conic-gradient(${entries
+      .slice(0, 5)
+      .map(([, v], i) => {
+        const start = cursor;
+        cursor += (v / total) * 100;
+        return `${colors[i]} ${start}% ${cursor}%`;
+      })
+      .join(",")})`;
+  document.querySelector("#spendingLegend").innerHTML = entries
+    .slice(0, 4)
+    .map(
+      ([c, v], i) =>
+        `<span><i style="background:${colors[i]}"></i><b>${esc(c)}</b><small>${Math.round((v / total) * 100)}%</small></span>`,
+    )
+    .join("");
+}
+function bankBalance(name) {
+  return transactions
+    .filter((t) => t.account === name)
+    .reduce((s, t) => s + (t.type === "income" ? t.amount : -t.amount), 0);
+}
+function renderBanks() {
+  const strip = document.querySelector("#bankStrip"),
+    cards = document.querySelector("#accountCards"),
+    count = document.querySelector("#bankCountLabel");
+  count.textContent = connectedBanks.length
+    ? `${connectedBanks.length} ${connectedBanks.length === 1 ? "instituição conectada" : "instituições conectadas"}`
+    : "Nenhuma instituição conectada";
+  if (!connectedBanks.length) {
+    strip.innerHTML = '<div class="empty-bank">Nenhum banco conectado.</div>';
+    cards.innerHTML =
+      '<div class="empty-accounts"><strong>Nenhuma instituição conectada</strong><span>Use a conexão demonstrativa para importar dados fictícios.</span></div>';
+    return;
+  }
+  strip.innerHTML = connectedBanks
+    .map((name) => {
+      const b = bankCatalog[name];
+      return `<button class="bank-mini ${b.mini}" data-bank-view="${esc(name)}"><span>${b.code}</span><small>${esc(name)}</small><strong>${money(bankBalance(name))}</strong></button>`;
+    })
+    .join("");
+  cards.innerHTML = connectedBanks
+    .map((name) => {
+      const b = bankCatalog[name];
+      return `<article class="account-card ${b.card}"><header><span>${b.code}</span><small>DADOS FICTÍCIOS ATUALIZADOS</small></header><p>${b.kind}</p><strong>${money(bankBalance(name))}</strong><footer><span>•••• ${b.last4}</span><b>Conectado</b></footer><button class="remove-bank" data-remove-bank="${esc(name)}">Remover instituição</button></article>`;
+    })
+    .join("");
+}
+function renderUpcoming() {
+  const items = connectedBanks.flatMap((name) =>
+    (bankCatalog[name].upcoming || []).map((x) => [...x, name]),
+  );
+  document.querySelector("#upcomingList").innerHTML = items.length
+    ? items
+        .slice(0, 3)
+        .map(
+          ([day, month, title, desc, value, bank]) =>
+            `<div><span class="date-box"><b>${day}</b>${month}</span><span><strong>${esc(title)}</strong><small>${esc(desc)} · ${esc(bank)}</small></span><b>${money(value)}</b></div>`,
+        )
+        .join("")
+    : '<div class="empty-bank">Nenhum pagamento importado.</div>';
+}
+function renderAccountOptions() {
+  const select = document.querySelector("#formAccount"),
+    value = select.value;
+  select.innerHTML =
+    '<option value="Manual">Lançamento manual</option>' +
+    connectedBanks
+      .map(
+        (name) =>
+          `<option${name === value ? " selected" : ""}>${esc(name)}</option>`,
+      )
+      .join("");
+}
+function showView(name) {
+  currentView = name;
+  document
+    .querySelectorAll(".view")
+    .forEach((v) => v.classList.toggle("active", v.id === `view-${name}`));
+  document
+    .querySelectorAll(".nav-btn")
+    .forEach((b) => b.classList.toggle("active", b.dataset.view === name));
+  const first = (currentProfile?.name || "Usuário").split(" ")[0],
+    titles = {
+      dashboard: `Olá, ${first} 👋`,
+      transactions: "Movimentações",
+      planning: "Planejamento",
+      accounts: "Open Finance",
+      ai: "Nexo IA",
+    };
+  document.querySelector("#pageTitle").textContent = titles[name];
+  document.querySelector("#sidebar").classList.remove("open");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
 
-applyTheme(localStorage.getItem(THEME_KEY)||'light');
-const sessionEmail=localStorage.getItem(SESSION_KEY);
-if(sessionEmail&&users[sessionEmail])loadCurrent(users[sessionEmail]);else{renderAll();showLogin();}
+document
+  .querySelectorAll("[data-view]")
+  .forEach((b) => b.addEventListener("click", () => showView(b.dataset.view)));
+document
+  .querySelectorAll("[data-view-link]")
+  .forEach((b) =>
+    b.addEventListener("click", () => showView(b.dataset.viewLink)),
+  );
+document
+  .querySelector("#menuBtn")
+  .addEventListener("click", () =>
+    document.querySelector("#sidebar").classList.toggle("open"),
+  );
+document
+  .querySelector("#authSwitch")
+  .addEventListener("click", () =>
+    setAuthMode(authMode === "login" ? "register" : "login"),
+  );
+document.querySelector("#showPassword").addEventListener("click", () => {
+  const input = document.querySelector("#authPassword");
+  input.type = input.type === "password" ? "text" : "password";
+});
+document.querySelector("#forgotBtn").addEventListener("click", () => {
+  document.querySelector("#authError").textContent =
+    "Neste protótipo, crie uma nova conta ou use a demonstração.";
+});
+
+// Autenticação local do protótipo. Uma aplicação real precisaria de servidor e banco de dados.
+document.querySelector("#loginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = document.querySelector("#authEmail").value.trim().toLowerCase(),
+    password = document.querySelector("#authPassword").value,
+    name = document.querySelector("#authName").value.trim(),
+    error = document.querySelector("#authError"),
+    submit = document.querySelector("#authSubmit");
+  if (
+    !email.includes("@") ||
+    password.length < 4 ||
+    (authMode === "register" && name.length < 2)
+  ) {
+    error.textContent =
+      "Confira o nome, o e-mail e a senha de pelo menos 4 caracteres.";
+    return;
+  }
+  submit.disabled = true;
+  const passwordHash = await hashPassword(password);
+  submit.disabled = false;
+  if (authMode === "register") {
+    if (users[email]) {
+      error.textContent =
+        "Já existe uma conta com este e-mail. Entre com sua senha.";
+      return;
+    }
+    const profile = {
+      name,
+      email,
+      passwordHash,
+      transactions: [],
+      banks: [],
+      goals: [],
+      createdAt: new Date().toISOString(),
+    };
+    users[email] = profile;
+    persistUsers();
+    localStorage.setItem(SESSION_KEY, email);
+    loadCurrent(profile);
+    showToast(
+      "Conta criada",
+      "Seu painel começou zerado e separado das demais contas.",
+    );
+    return;
+  }
+  const profile = users[email];
+  if (!profile || profile.passwordHash !== passwordHash) {
+    error.textContent =
+      "E-mail ou senha incorretos. Você também pode acessar a demonstração.";
+    return;
+  }
+  localStorage.setItem(SESSION_KEY, email);
+  loadCurrent(profile);
+});
+document.querySelector("#demoLogin").addEventListener("click", async () => {
+  const email = "demo@nexoflow.com",
+    profile = {
+      name: "Marina Costa",
+      email,
+      passwordHash: await hashPassword("1234"),
+      transactions: structuredClone(demoTransactions),
+      banks: ["Nubank", "Banco Inter", "Itaú"],
+      goals: structuredClone(demoGoals),
+      demo: true,
+    };
+  users[email] = profile;
+  persistUsers();
+  localStorage.setItem(SESSION_KEY, email);
+  loadCurrent(profile);
+  showToast(
+    "Demonstração aberta",
+    "Esta conta usa somente informações fictícias.",
+  );
+});
+document.querySelector("#logoutBtn").addEventListener("click", () => {
+  saveCurrent();
+  localStorage.removeItem(SESSION_KEY);
+  currentEmail = "";
+  currentProfile = null;
+  transactions = [];
+  connectedBanks = [];
+  goals = [];
+  currentView = "dashboard";
+  showLogin();
+  setAuthMode("login");
+});
+document.querySelector("#privacyBtn").addEventListener("click", () => {
+  privateMode = !privateMode;
+  const button = document.querySelector("#privacyBtn");
+  button.textContent = privateMode ? "◎" : "◉";
+  button.setAttribute(
+    "aria-label",
+    privateMode ? "Mostrar valores" : "Ocultar valores",
+  );
+  button.title = privateMode ? "Mostrar valores" : "Ocultar valores";
+  renderAll();
+  showToast(
+    privateMode ? "Valores ocultos" : "Valores visíveis",
+    privateMode
+      ? "Os números financeiros foram protegidos nesta tela."
+      : "Os números financeiros voltaram a aparecer.",
+  );
+});
+function applyTheme(theme) {
+  const dark = theme === "dark";
+  document.documentElement.dataset.theme = dark ? "dark" : "light";
+  const button = document.querySelector("#themeBtn");
+  button.textContent = dark ? "☀" : "☾";
+  button.setAttribute(
+    "aria-label",
+    dark ? "Ativar tema claro" : "Ativar tema escuro",
+  );
+  button.title = dark ? "Ativar tema claro" : "Ativar tema escuro";
+  document.querySelector('meta[name="theme-color"]').content = dark
+    ? "#090b12"
+    : "#f4f6fb";
+}
+document.querySelector("#themeBtn").addEventListener("click", () => {
+  const next =
+    document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  localStorage.setItem(THEME_KEY, next);
+  applyTheme(next);
+  showToast(
+    next === "dark" ? "Tema escuro ativado" : "Tema claro ativado",
+    "A preferência foi salva neste navegador.",
+  );
+});
+document.querySelector("#chartPeriod").addEventListener("change", renderChart);
+["searchInput", "typeFilter", "categoryFilter"].forEach((id) =>
+  document
+    .querySelector(`#${id}`)
+    .addEventListener(id === "searchInput" ? "input" : "change", renderTable),
+);
+
+const transactionModal = document.querySelector("#transactionModal");
+function openTransaction() {
+  transactionModal.hidden = false;
+  document.body.style.overflow = "hidden";
+  const now = new Date();
+  const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 10);
+  document.querySelector("#dateInput").value = localDate;
+  setTimeout(() => document.querySelector("#descriptionInput").focus(), 50);
+}
+function closeTransaction() {
+  transactionModal.hidden = true;
+  document.body.style.overflow = "";
+}
+document
+  .querySelectorAll(".open-transaction")
+  .forEach((b) => b.addEventListener("click", openTransaction));
+document
+  .querySelectorAll(".modal-close")
+  .forEach((b) => b.addEventListener("click", closeTransaction));
+document.querySelectorAll(".type-toggle button").forEach((b) =>
+  b.addEventListener("click", () => {
+    document
+      .querySelectorAll(".type-toggle button")
+      .forEach((x) => x.classList.toggle("active", x === b));
+    document.querySelector("#transactionType").value = b.dataset.type;
+  }),
+);
+document.querySelector("#transactionForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const d = document.querySelector("#descriptionInput").value.trim(),
+    raw = document
+      .querySelector("#amountInput")
+      .value.replace(".", "")
+      .replace(",", "."),
+    amount = Number(raw),
+    date = document.querySelector("#dateInput").value;
+  if (d.length < 2 || !amount || amount <= 0 || !date) {
+    document.querySelector("#formError").textContent =
+      "Preencha descrição, valor e data corretamente.";
+    return;
+  }
+  lastAdded = {
+    id: `manual-${Date.now()}`,
+    description: d,
+    category: document.querySelector("#formCategory").value,
+    date,
+    type: document.querySelector("#transactionType").value,
+    amount,
+    account: document.querySelector("#formAccount").value,
+  };
+  transactions.push(lastAdded);
+  saveCurrent();
+  renderAll();
+  closeTransaction();
+  e.target.reset();
+  showToast(
+    "Lançamento salvo",
+    `${lastAdded.account} foi identificada como a origem.`,
+  );
+});
+document.querySelector("#transactionRows").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-delete]");
+  if (!b) return;
+  const item = transactions.find((t) => String(t.id) === b.dataset.delete);
+  if (!item) return;
+  openConfirm(
+    "Excluir movimentação?",
+    `“${item.description}” será removida e os totais da conta serão recalculados.`,
+    "Excluir movimentação",
+    () => {
+      transactions = transactions.filter((t) => t !== item);
+      saveCurrent();
+      renderAll();
+      showToast(
+        "Transação excluída",
+        "Os totais desta conta foram recalculados.",
+      );
+    },
+  );
+});
+document.querySelector("#undoBtn").addEventListener("click", () => {
+  if (!lastAdded) return;
+  transactions = transactions.filter((t) => t !== lastAdded);
+  saveCurrent();
+  renderAll();
+  lastAdded = null;
+  showToast("Ação desfeita", "O lançamento foi removido.");
+});
+document.querySelector("#exportBtn").addEventListener("click", () => {
+  const rows = [
+      "Descrição,Categoria,Data,Tipo,Conta,Valor",
+      ...transactions.map((t) =>
+        [
+          t.description,
+          t.category,
+          t.date,
+          t.type,
+          t.account,
+          t.amount.toFixed(2),
+        ]
+          .map((x) => `"${String(x).replaceAll('"', '""')}"`)
+          .join(","),
+      ),
+    ],
+    blob = new Blob([rows.join("\n")], { type: "text/csv" }),
+    a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "nexo-transacoes.csv";
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast("CSV exportado", "Arquivo preparado para download.");
+});
+
+function parseCurrency(value) {
+  return Number(String(value).trim().replace(/\./g, "").replace(",", "."));
+}
+
+// As metas funcionam como cofrinhos e acompanham apenas a conta local aberta.
+const goalModal = document.querySelector("#goalModal");
+const depositModal = document.querySelector("#depositModal");
+function openGoal() {
+  goalModal.hidden = false;
+  document.body.style.overflow = "hidden";
+  document.querySelector("#goalError").textContent = "";
+  setTimeout(() => document.querySelector("#goalName").focus(), 50);
+}
+function closeGoal() {
+  goalModal.hidden = true;
+  document.body.style.overflow = "";
+  document.querySelector("#goalForm").reset();
+}
+function openDeposit(id) {
+  const goal = goals.find((item) => String(item.id) === String(id));
+  if (!goal) return;
+  activeGoalId = goal.id;
+  document.querySelector("#depositGoalName").textContent =
+    `Você está guardando para: ${goal.name}`;
+  document.querySelector("#depositError").textContent = "";
+  depositModal.hidden = false;
+  document.body.style.overflow = "hidden";
+  setTimeout(() => document.querySelector("#depositAmount").focus(), 50);
+}
+function closeDeposit() {
+  depositModal.hidden = true;
+  document.body.style.overflow = "";
+  document.querySelector("#depositForm").reset();
+  activeGoalId = "";
+}
+document
+  .querySelectorAll(".open-goal")
+  .forEach((button) => button.addEventListener("click", openGoal));
+document
+  .querySelectorAll(".goal-close")
+  .forEach((button) => button.addEventListener("click", closeGoal));
+document
+  .querySelectorAll(".deposit-close")
+  .forEach((button) => button.addEventListener("click", closeDeposit));
+document.querySelector("#goalsList").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-deposit]");
+  if (button) openDeposit(button.dataset.deposit);
+});
+document.querySelector("#goalForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const name = document.querySelector("#goalName").value.trim(),
+    target = parseCurrency(document.querySelector("#goalTarget").value),
+    initial = parseCurrency(
+      document.querySelector("#goalInitial").value || "0",
+    ),
+    error = document.querySelector("#goalError");
+  if (
+    name.length < 2 ||
+    !target ||
+    target <= 0 ||
+    Number.isNaN(initial) ||
+    initial < 0
+  ) {
+    error.textContent = "Informe um nome e um objetivo maior que zero.";
+    return;
+  }
+  goals.push({
+    id: `goal-${Date.now()}`,
+    name,
+    icon: document.querySelector("#goalIcon").value,
+    target,
+    current: Math.min(initial, target),
+  });
+  saveCurrent();
+  renderGoals();
+  closeGoal();
+  showToast("Cofrinho criado", `${name} já aparece no seu planejamento.`);
+});
+document.querySelector("#depositForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const amount = parseCurrency(document.querySelector("#depositAmount").value),
+    goal = goals.find((item) => String(item.id) === String(activeGoalId)),
+    error = document.querySelector("#depositError");
+  if (!goal || !amount || amount <= 0) {
+    error.textContent = "Informe um valor maior que zero.";
+    return;
+  }
+  goal.current = Math.min(
+    Number(goal.target),
+    Number(goal.current || 0) + amount,
+  );
+  const completed = goal.current >= goal.target;
+  saveCurrent();
+  renderGoals();
+  closeDeposit();
+  showToast(
+    completed ? "Meta alcançada!" : "Valor guardado",
+    completed
+      ? `${goal.name} chegou a 100%.`
+      : `O cofrinho ${goal.name} foi atualizado.`,
+  );
+});
+goalModal.addEventListener("click", (event) => {
+  if (event.target === goalModal) closeGoal();
+});
+depositModal.addEventListener("click", (event) => {
+  if (event.target === depositModal) closeDeposit();
+});
+
+const bankModal = document.querySelector("#bankModal");
+const confirmModal = document.querySelector("#confirmModal");
+function openConfirm(title, text, label, action) {
+  document.querySelector("#confirmTitle").textContent = title;
+  document.querySelector("#confirmText").textContent = text;
+  document.querySelector("#confirmAction").textContent = label;
+  pendingConfirmAction = action;
+  confirmModal.hidden = false;
+  document.body.style.overflow = "hidden";
+  setTimeout(() => document.querySelector("#confirmCancel").focus(), 50);
+}
+function closeConfirm() {
+  confirmModal.hidden = true;
+  document.body.style.overflow = "";
+  pendingConfirmAction = null;
+}
+document
+  .querySelector("#confirmCancel")
+  .addEventListener("click", closeConfirm);
+document.querySelector("#confirmAction").addEventListener("click", () => {
+  const action = pendingConfirmAction;
+  closeConfirm();
+  if (action) action();
+});
+confirmModal.addEventListener("click", (event) => {
+  if (event.target === confirmModal) closeConfirm();
+});
+function setBankStep(n) {
+  document
+    .querySelectorAll(".bank-step")
+    .forEach((s) => s.classList.toggle("active", Number(s.dataset.step) === n));
+  document
+    .querySelectorAll(".steps span")
+    .forEach((s, i) => s.classList.toggle("active", i < n));
+}
+function openBank() {
+  bankModal.hidden = false;
+  document.body.style.overflow = "hidden";
+  selectedBank = "";
+  setBankStep(1);
+}
+function closeBank() {
+  bankModal.hidden = true;
+  document.body.style.overflow = "";
+}
+function connectSelectedBank() {
+  if (!selectedBank || !bankCatalog[selectedBank]) return;
+  if (connectedBanks.includes(selectedBank)) {
+    document.querySelector("#successBankText").textContent =
+      `${selectedBank} já está conectado a esta conta.`;
+    return;
+  }
+  const stamp = Date.now();
+  connectedBanks.push(selectedBank);
+  // Ao conectar, copiamos lançamentos fictícios para simular uma sincronização.
+  bankCatalog[selectedBank].transactions.forEach((t, i) =>
+    transactions.push({
+      id: `bank-${stamp}-${i}`,
+      description: t[0],
+      category: t[1],
+      date: t[2],
+      type: t[3],
+      amount: t[4],
+      account: selectedBank,
+      imported: true,
+    }),
+  );
+  saveCurrent();
+  renderAll();
+  document.querySelector("#successBankText").textContent =
+    `${selectedBank} foi conectado e ${bankCatalog[selectedBank].transactions.length} movimentações fictícias foram importadas.`;
+  showToast(
+    "Banco conectado",
+    `Os lançamentos aparecem identificados como ${selectedBank}.`,
+  );
+}
+document
+  .querySelectorAll(".connect-bank")
+  .forEach((b) => b.addEventListener("click", openBank));
+document
+  .querySelectorAll(".bank-close")
+  .forEach((b) => b.addEventListener("click", closeBank));
+document.querySelectorAll("[data-bank]").forEach((b) =>
+  b.addEventListener("click", () => {
+    selectedBank = b.dataset.bank;
+    document.querySelector("#selectedBankName").textContent = selectedBank;
+    document.querySelector("#selectedBankLogo").textContent =
+      b.querySelector("i").textContent;
+    document.querySelector("#selectedBankLogo").className =
+      b.querySelector("i").className;
+    setBankStep(2);
+  }),
+);
+document
+  .querySelector("#bankSearch")
+  .addEventListener("input", (e) =>
+    document
+      .querySelectorAll("[data-bank]")
+      .forEach(
+        (b) =>
+          (b.hidden = !b.dataset.bank
+            .toLowerCase()
+            .includes(e.target.value.toLowerCase())),
+      ),
+  );
+document.querySelector("#authorizeBank").addEventListener("click", () => {
+  connectSelectedBank();
+  setBankStep(3);
+});
+document.querySelector("#accountCards").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-remove-bank]");
+  if (!button) return;
+  const name = button.dataset.removeBank;
+  if (!connectedBanks.includes(name)) return;
+  openConfirm(
+    "Remover instituição?",
+    `${name} e todas as movimentações fictícias vinculadas a ela serão removidas desta conta.`,
+    "Remover instituição",
+    () => {
+      connectedBanks = connectedBanks.filter((bank) => bank !== name);
+      transactions = transactions.filter(
+        (transaction) => transaction.account !== name,
+      );
+      saveCurrent();
+      renderAll();
+      showToast(
+        "Instituição removida",
+        `${name} e seus dados fictícios foram retirados desta conta.`,
+      );
+    },
+  );
+});
+bankModal.addEventListener("click", (e) => {
+  if (e.target === bankModal) closeBank();
+});
+transactionModal.addEventListener("click", (e) => {
+  if (e.target === transactionModal) closeTransaction();
+});
+function showToast(title, text) {
+  const t = document.querySelector("#toast");
+  t.querySelector("strong").textContent = title;
+  t.querySelector("small").textContent = text;
+  t.classList.add("show");
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => t.classList.remove("show"), 4200);
+}
+
+// A Nexo IA usa regras simples em JavaScript e os totais da conta.
+// O protótipo não envia informações para um serviço externo de inteligência artificial.
+function askAI(q) {
+  if (!q.trim()) return;
+  const t = totals(),
+    spent = transactions
+      .filter((x) => x.type === "expense")
+      .reduce((a, x) => {
+        a[x.category] = (a[x.category] || 0) + x.amount;
+        return a;
+      }, {}),
+    top = Object.entries(spent).sort((a, b) => b[1] - a[1])[0],
+    answer = !transactions.length
+      ? "Ainda não há movimentações nesta conta. Conecte um banco fictício ou adicione um lançamento para receber uma análise."
+      : q === "Onde estou gastando mais?" && top
+        ? `Sua maior categoria é ${top[0]}, com ${brl.format(top[1])} em despesas.`
+        : q === "Posso comprar um notebook?"
+          ? `Seu saldo atual é ${brl.format(t.balance)}. Compare esse valor com o preço do notebook e preserve uma reserva para despesas essenciais.`
+          : q === "Como economizar R$ 500?"
+            ? "Defina um limite semanal e revise primeiro a categoria com maior gasto. O painel continuará recalculando o saldo desta conta."
+            : `Nesta conta, as receitas somam ${brl.format(t.income)} e as despesas ${brl.format(t.expense)}.`;
+  const messages = document.querySelector("#messages");
+  messages.insertAdjacentHTML(
+    "beforeend",
+    `<div class="message user-message"><p>${esc(q)}</p></div>`,
+  );
+  messages.insertAdjacentHTML(
+    "beforeend",
+    `<div class="message ai-message"><span>✦</span><p>${esc(answer)}</p></div>`,
+  );
+  messages.scrollTop = messages.scrollHeight;
+}
+document
+  .querySelectorAll("[data-question]")
+  .forEach((b) => b.addEventListener("click", () => askAI(b.dataset.question)));
+document.querySelector("#chatForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const input = document.querySelector("#chatInput");
+  askAI(input.value);
+  input.value = "";
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    closeTransaction();
+    closeBank();
+    closeGoal();
+    closeDeposit();
+    closeConfirm();
+  }
+});
+
+applyTheme(localStorage.getItem(THEME_KEY) || "light");
+const sessionEmail = localStorage.getItem(SESSION_KEY);
+if (sessionEmail && users[sessionEmail]) loadCurrent(users[sessionEmail]);
+else {
+  renderAll();
+  showLogin();
+}

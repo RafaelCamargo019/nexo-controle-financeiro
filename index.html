@@ -1,165 +1,816 @@
 <!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Nexo Flow - controle financeiro inteligente com Open Finance e insights de IA.">
-  <meta name="theme-color" content="#171729">
-  <title>Nexo Flow | Sua vida financeira</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g'%3E%3Cstop stop-color='%236d5dfb'/%3E%3Cstop offset='1' stop-color='%23ff7a5c'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='18' fill='url(%23g)'/%3E%3Cpath d='M17 43V21h8l14 13V21h8v22h-8L25 30v13z' fill='white'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-  <a class="skip" href="#main">Pular para o conteúdo</a>
-  <section class="login-page" id="loginPage">
-    <div class="login-showcase">
-      <div class="login-brand"><span class="logo">N</span><span>Nexo <b>Flow</b></span></div>
-      <div class="login-copy">
-        <span class="login-kicker">CONTROLE FINANCEIRO PESSOAL</span>
-        <h1>Veja sua vida financeira por inteiro.</h1>
-        <p>Contas, planejamento e orientações inteligentes em uma experiência simples.</p>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      name="description"
+      content="Nexo Flow - controle financeiro inteligente com Open Finance e insights de IA."
+    />
+    <meta name="theme-color" content="#171729" />
+    <title>Nexo Flow | Sua vida financeira</title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g'%3E%3Cstop stop-color='%236d5dfb'/%3E%3Cstop offset='1' stop-color='%23ff7a5c'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='18' fill='url(%23g)'/%3E%3Cpath d='M17 43V21h8l14 13V21h8v22h-8L25 30v13z' fill='white'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Pular para o conteúdo</a>
+
+    <!-- Acesso local: cada e-mail mantém seus próprios dados neste navegador. -->
+    <section class="login-page" id="loginPage">
+      <div class="login-showcase">
+        <div class="login-brand">
+          <span class="logo">N</span><span>Nexo <b>Flow</b></span>
+        </div>
+        <div class="login-copy">
+          <span class="login-kicker">CONTROLE FINANCEIRO PESSOAL</span>
+          <h1>Veja sua vida financeira por inteiro.</h1>
+          <p>
+            Contas, planejamento e orientações inteligentes em uma experiência
+            simples.
+          </p>
+        </div>
+        <div class="login-preview">
+          <span>Saldo consolidado</span><strong>R$ 5.677,45</strong
+          ><small>3 bancos conectados via Open Finance</small>
+          <div>
+            <i style="height: 35%"></i><i style="height: 52%"></i
+            ><i style="height: 44%"></i><i style="height: 72%"></i
+            ><i style="height: 63%"></i><i style="height: 90%"></i>
+          </div>
+        </div>
+        <small class="login-note"
+          >Protótipo acadêmico. Nenhum dado bancário real é utilizado.</small
+        >
       </div>
-      <div class="login-preview">
-        <span>Saldo consolidado</span><strong>R$ 5.677,45</strong><small>3 bancos conectados via Open Finance</small>
-        <div><i style="height:35%"></i><i style="height:52%"></i><i style="height:44%"></i><i style="height:72%"></i><i style="height:63%"></i><i style="height:90%"></i></div>
+      <div class="login-form-area">
+        <form class="login-form" id="loginForm">
+          <span class="mobile-login-brand"><i>N</i> Nexo Flow</span>
+          <small id="authKicker">BEM-VINDA DE VOLTA</small>
+          <h2 id="authTitle">Entre na sua conta</h2>
+          <p id="authDescription">Acesse seu painel financeiro pessoal.</p>
+          <label id="nameField" hidden
+            >Nome completo<input
+              id="authName"
+              autocomplete="name"
+              placeholder="Como devemos chamar você?"
+          /></label>
+          <label
+            >E-mail<input
+              id="authEmail"
+              type="email"
+              autocomplete="email"
+              placeholder="seuemail@exemplo.com"
+              required
+          /></label>
+          <label
+            >Senha
+            <div class="password-field">
+              <input
+                id="authPassword"
+                type="password"
+                autocomplete="current-password"
+                placeholder="Mínimo de 4 caracteres"
+                required
+              /><button
+                id="showPassword"
+                type="button"
+                aria-label="Mostrar senha"
+              >
+                ◉
+              </button>
+            </div></label
+          >
+          <div class="login-options">
+            <label><input type="checkbox" checked /> Manter conectado</label
+            ><button type="button" id="forgotBtn">Esqueci a senha</button>
+          </div>
+          <p class="auth-error" id="authError" role="alert"></p>
+          <button class="login-submit" type="submit" id="authSubmit">
+            Entrar
+          </button>
+          <button class="demo-login" type="button" id="demoLogin">
+            Acessar demonstração
+          </button>
+          <p class="auth-switch">
+            <span id="switchText">Ainda não tem uma conta?</span>
+            <button type="button" id="authSwitch">Criar conta</button>
+          </p>
+        </form>
       </div>
-      <small class="login-note">Protótipo acadêmico. Nenhum dado bancário real é utilizado.</small>
+    </section>
+    <!-- Estrutura principal exibida depois do login. -->
+    <div class="app locked" id="appShell">
+      <aside class="sidebar" id="sidebar">
+        <div class="brand">
+          <span class="logo">N</span><span>Nexo <b>Flow</b></span>
+        </div>
+        <nav aria-label="Navegação principal">
+          <button class="nav-btn active" data-view="dashboard">
+            <span>⌂</span>Início
+          </button>
+          <button class="nav-btn" data-view="transactions">
+            <span>↕</span>Transações
+          </button>
+          <button class="nav-btn" data-view="planning">
+            <span>◎</span>Planejamento
+          </button>
+          <button class="nav-btn" data-view="accounts">
+            <span>▣</span>Contas e cartões
+          </button>
+          <button class="nav-btn" data-view="ai">
+            <span>✦</span>Nexo IA <i>Novo</i>
+          </button>
+        </nav>
+        <div class="side-spacer"></div>
+        <button class="open-finance-card connect-bank">
+          <span
+            ><strong>Conectar banco</strong
+            ><small id="bankCountLabel"
+              >Nenhuma instituição conectada</small
+            ></span
+          >
+        </button>
+        <div class="user-card">
+          <span class="avatar" id="userInitials">MC</span
+          ><span class="user-details"
+            ><strong id="userName">Marina Costa</strong
+            ><small id="userEmail">Plano Essencial</small></span
+          ><button
+            id="logoutBtn"
+            aria-label="Sair da conta"
+            title="Sair da conta"
+          >
+            →
+          </button>
+        </div>
+      </aside>
+
+      <main id="main">
+        <header class="topbar">
+          <button class="mobile-menu" id="menuBtn" aria-label="Abrir menu">
+            ☰
+          </button>
+          <div>
+            <small id="dateLabel">28 DE SETEMBRO DE 2026</small>
+            <h1 id="pageTitle">Olá, Marina 👋</h1>
+          </div>
+          <div class="top-actions">
+            <button
+              class="icon-button"
+              id="privacyBtn"
+              aria-label="Ocultar valores"
+              title="Ocultar valores"
+            >
+              ◉
+            </button>
+            <button
+              class="notification theme-toggle"
+              id="themeBtn"
+              aria-label="Ativar tema escuro"
+              title="Ativar tema escuro"
+            >
+              ☾
+            </button>
+            <button class="secondary connect-bank">
+              <span>Conectar banco</span>
+            </button>
+            <button class="primary open-transaction">
+              ＋ <span class="hide-mobile">Novo lançamento</span>
+            </button>
+          </div>
+        </header>
+
+        <!-- Resumo geral da conta. -->
+        <section class="view active" id="view-dashboard">
+          <div class="headline">
+            <div><p>Visão consolidada das suas contas</p></div>
+            <div class="sync"><i></i>Sincronizado agora</div>
+          </div>
+
+          <div class="summary-grid">
+            <article class="balance-card">
+              <div class="balance-top">
+                <span>Patrimônio disponível</span
+                ><button aria-label="Mais opções">•••</button>
+              </div>
+              <strong id="balanceValue" class="private-value">R$ 0,00</strong>
+              <div class="balance-change" id="balanceContext">
+                Comece conectando um banco ou criando um lançamento
+              </div>
+              <div class="balance-spark" aria-hidden="true">
+                <i style="height: 35%"></i><i style="height: 48%"></i
+                ><i style="height: 42%"></i><i style="height: 66%"></i
+                ><i style="height: 59%"></i><i style="height: 83%"></i
+                ><i style="height: 100%"></i>
+              </div>
+            </article>
+            <article class="stat-card">
+              <div class="stat-head">
+                <span class="stat-icon cyan">↙</span
+                ><span class="tag up" id="incomeTag">Sem dados</span>
+              </div>
+              <small>Receitas no mês</small
+              ><strong id="incomeValue" class="private-value">R$ 0,00</strong>
+              <p id="incomeContext">Nenhuma receita cadastrada</p>
+            </article>
+            <article class="stat-card">
+              <div class="stat-head">
+                <span class="stat-icon coral">↗</span
+                ><span class="tag down" id="expenseTag">Sem dados</span>
+              </div>
+              <small>Despesas no mês</small
+              ><strong id="expenseValue" class="private-value">R$ 0,00</strong>
+              <p id="expenseContext">Nenhuma despesa cadastrada</p>
+            </article>
+            <article class="stat-card">
+              <div class="stat-head">
+                <span class="stat-icon purple">◎</span
+                ><span class="tag up" id="savedTag">Início</span>
+              </div>
+              <small>Economizado</small
+              ><strong id="savedValue" class="private-value">R$ 0,00</strong>
+              <p id="savedContext">Seu saldo positivo aparece aqui</p>
+            </article>
+          </div>
+
+          <article class="ai-banner">
+            <div class="ai-orb"><span>✦</span></div>
+            <div>
+              <small>INSIGHT DA NEXO IA</small>
+              <h2 id="aiInsightTitle">Seu painel está pronto para começar</h2>
+              <p id="aiInsightText">
+                Conecte um banco fictício para importar movimentações de
+                demonstração.
+              </p>
+            </div>
+            <button class="ai-action" data-view-link="ai">
+              Ver análise completa <span>→</span>
+            </button>
+            <div class="ai-glow"></div>
+          </article>
+
+          <div class="content-grid">
+            <article class="panel cash-panel">
+              <div class="panel-title">
+                <div>
+                  <small>FLUXO FINANCEIRO</small>
+                  <h2>Entradas e saídas</h2>
+                </div>
+                <select id="chartPeriod">
+                  <option value="6">Últimos 6 meses</option>
+                  <option value="4">Últimos 4 meses</option>
+                </select>
+              </div>
+              <div class="chart-total">
+                <strong id="chartTotal">R$ 0,00</strong
+                ><span><i class="purple-dot"></i>Receitas</span
+                ><span><i class="coral-dot"></i>Despesas</span>
+              </div>
+              <div
+                class="chart"
+                id="cashChart"
+                role="img"
+                aria-label="Comparação de receitas e despesas"
+              ></div>
+            </article>
+            <article class="panel spending-panel">
+              <div class="panel-title">
+                <div>
+                  <small>GASTOS</small>
+                  <h2>Por categoria</h2>
+                </div>
+                <button class="link-btn" data-view-link="planning">
+                  Detalhes →
+                </button>
+              </div>
+              <div class="donut-row">
+                <div class="donut" id="spendingDonut">
+                  <span
+                    ><strong id="spendingTotal">R$ 0,00</strong
+                    ><small>Total gasto</small></span
+                  >
+                </div>
+                <div class="legend" id="spendingLegend">
+                  <p class="empty-inline">Sem despesas para classificar.</p>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="content-grid lower">
+            <article class="panel accounts-preview">
+              <div class="panel-title">
+                <div>
+                  <small>OPEN FINANCE</small>
+                  <h2>Contas conectadas</h2>
+                </div>
+                <button class="link-btn connect-bank">Conectar banco</button>
+              </div>
+              <div class="bank-strip" id="bankStrip">
+                <div class="empty-bank">Nenhum banco conectado.</div>
+              </div>
+              <div class="secure-note">
+                ▱ Seus dados são protegidos e você controla as permissões.
+              </div>
+            </article>
+            <article class="panel upcoming-panel">
+              <div class="panel-title">
+                <div>
+                  <small>AGENDA</small>
+                  <h2>Próximos pagamentos</h2>
+                </div>
+                <button class="calendar-chip">Setembro⌄</button>
+              </div>
+              <div class="upcoming-list" id="upcomingList">
+                <div class="empty-bank">Nenhum pagamento importado.</div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- Consulta e filtros de movimentações. -->
+        <section class="view" id="view-transactions">
+          <div class="section-heading">
+            <div>
+              <small>MOVIMENTAÇÕES</small>
+              <h2>Todas as transações</h2>
+              <p>Acompanhe cada entrada e saída em um só lugar.</p>
+            </div>
+            <button class="primary open-transaction">＋ Novo lançamento</button>
+          </div>
+          <div class="filter-bar">
+            <label
+              >⌕<input
+                id="searchInput"
+                type="search"
+                placeholder="Buscar transação" /></label
+            ><select id="typeFilter">
+              <option value="all">Todos os tipos</option>
+              <option value="income">Receitas</option>
+              <option value="expense">Despesas</option></select
+            ><select id="categoryFilter">
+              <option value="all">Todas as categorias</option></select
+            ><button class="secondary" id="exportBtn">⇩ Exportar CSV</button>
+          </div>
+          <article class="panel transaction-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Transação</th>
+                  <th>Categoria</th>
+                  <th>Data</th>
+                  <th>Conta</th>
+                  <th>Valor</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="transactionRows"></tbody>
+            </table>
+            <div class="empty" id="emptyState" hidden>
+              Nenhuma transação encontrada.
+            </div>
+          </article>
+        </section>
+
+        <!-- Planejamento: limites mensais e metas no formato de cofrinhos. -->
+        <section class="view" id="view-planning">
+          <div class="section-heading">
+            <div>
+              <small>PLANEJAMENTO</small>
+              <h2>Seu próximo capítulo</h2>
+              <p>Metas, limites e projeções para tomar decisões melhores.</p>
+            </div>
+            <button class="secondary open-goal">＋ Criar meta</button>
+          </div>
+          <div class="plan-grid">
+            <article class="forecast-card">
+              <small>PROJEÇÃO NEXO</small>
+              <h2>Saldo previsto para dezembro</h2>
+              <strong class="private-value" id="forecastValue">R$ 0,00</strong
+              ><span id="forecastContext"
+                >Adicione movimentações para gerar uma projeção</span
+              >
+              <div class="forecast-line">
+                <i></i><b></b><em></em><span></span>
+              </div>
+              <div class="forecast-months">
+                <span>SET</span><span>OUT</span><span>NOV</span><span>DEZ</span>
+              </div>
+            </article>
+            <article class="panel budget-list">
+              <div class="panel-title">
+                <div>
+                  <small>LIMITES</small>
+                  <h2>Orçamento do mês</h2>
+                </div>
+                <span id="budgetUsage">0% utilizado</span>
+              </div>
+              <div id="budgetList"></div>
+            </article>
+            <article class="panel goals">
+              <div class="panel-title">
+                <div>
+                  <small>COFRINHOS</small>
+                  <h2>Metas financeiras</h2>
+                </div>
+                <button class="link-btn open-goal">＋ Nova meta</button>
+              </div>
+              <p class="goals-help">
+                Crie um objetivo e guarde valores aos poucos. O progresso fica
+                salvo somente nesta conta.
+              </p>
+              <div id="goalsList"></div>
+            </article>
+          </div>
+        </section>
+
+        <!-- Instituições conectadas no cenário simulado de Open Finance. -->
+        <section class="view" id="view-accounts">
+          <div class="section-heading">
+            <div>
+              <small>OPEN FINANCE</small>
+              <h2>Contas e cartões</h2>
+              <p>Uma visão unificada, mesmo usando bancos diferentes.</p>
+            </div>
+            <button class="primary connect-bank">Conectar instituição</button>
+          </div>
+          <div class="open-finance-hero">
+            <div>
+              <span class="open-badge">OPEN FINANCE BRASIL</span>
+              <h2>Todos os seus bancos.<br />Uma única visão.</h2>
+              <p>
+                Conecte instituições de forma segura e escolha exatamente quais
+                informações deseja compartilhar.
+              </p>
+              <button class="white-btn connect-bank">
+                Conectar um novo banco
+              </button>
+            </div>
+            <div class="orbit">
+              <span class="orbit-center">N</span><i class="o1">Nu</i
+              ><i class="o2">in</i><i class="o3">it</i><i class="o4">+</i>
+            </div>
+          </div>
+          <div class="account-cards" id="accountCards">
+            <div class="empty-accounts">
+              <strong>Nenhuma instituição conectada</strong
+              ><span
+                >Use a conexão demonstrativa para importar dados
+                fictícios.</span
+              >
+            </div>
+          </div>
+          <article class="panel permissions">
+            <div>
+              <span class="shield">✓</span>
+              <div>
+                <h3>Você está no controle</h3>
+                <p>
+                  As conexões podem ser pausadas ou removidas a qualquer
+                  momento. Esta tela é uma simulação para apresentação
+                  acadêmica.
+                </p>
+              </div>
+            </div>
+            <button class="secondary">Gerenciar permissões</button>
+          </article>
+        </section>
+
+        <!-- Assistente baseado em regras e nos dados locais da conta. -->
+        <section class="view" id="view-ai">
+          <div class="ai-page">
+            <div class="ai-sidebar">
+              <div class="ai-logo">✦</div>
+              <h2>Nexo IA</h2>
+              <p>
+                Sua assistente entende seus hábitos e transforma dados em
+                decisões simples.
+              </p>
+              <div class="suggestions">
+                <button data-question="Onde estou gastando mais?">
+                  Onde estou gastando mais?</button
+                ><button data-question="Posso comprar um notebook?">
+                  Posso comprar um notebook?</button
+                ><button data-question="Como economizar R$ 500?">
+                  Como economizar R$ 500?
+                </button>
+              </div>
+              <small
+                >Respostas demonstrativas com base nos dados fictícios do
+                painel.</small
+              >
+            </div>
+            <div class="chat">
+              <header>
+                <span class="ai-avatar">✦</span>
+                <div>
+                  <strong>Nexo IA</strong
+                  ><small><i></i> Pronta para ajudar</small>
+                </div>
+                <button>•••</button>
+              </header>
+              <div class="messages" id="messages">
+                <div class="message ai-message">
+                  <span>✦</span>
+                  <p>
+                    Olá, Marina! Analisei seu mês. Você está com uma boa margem,
+                    mas encontrei oportunidades de economizar sem mudar muito
+                    sua rotina. O que quer descobrir?
+                  </p>
+                </div>
+              </div>
+              <form id="chatForm">
+                <input
+                  id="chatInput"
+                  placeholder="Pergunte sobre sua vida financeira..."
+                  autocomplete="off"
+                /><button aria-label="Enviar">↑</button>
+              </form>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
-    <div class="login-form-area">
-      <form class="login-form" id="loginForm">
-        <span class="mobile-login-brand"><i>N</i> Nexo Flow</span>
-        <small id="authKicker">BEM-VINDA DE VOLTA</small>
-        <h2 id="authTitle">Entre na sua conta</h2>
-        <p id="authDescription">Acesse seu painel financeiro pessoal.</p>
-        <label id="nameField" hidden>Nome completo<input id="authName" autocomplete="name" placeholder="Como devemos chamar você?"></label>
-        <label>E-mail<input id="authEmail" type="email" autocomplete="email" placeholder="seuemail@exemplo.com" required></label>
-        <label>Senha<div class="password-field"><input id="authPassword" type="password" autocomplete="current-password" placeholder="Mínimo de 4 caracteres" required><button id="showPassword" type="button" aria-label="Mostrar senha">◉</button></div></label>
-        <div class="login-options"><label><input type="checkbox" checked> Manter conectado</label><button type="button" id="forgotBtn">Esqueci a senha</button></div>
-        <p class="auth-error" id="authError" role="alert"></p>
-        <button class="login-submit" type="submit" id="authSubmit">Entrar</button>
-        <button class="demo-login" type="button" id="demoLogin">Acessar demonstração</button>
-        <p class="auth-switch"><span id="switchText">Ainda não tem uma conta?</span> <button type="button" id="authSwitch">Criar conta</button></p>
+
+    <!-- Janelas usadas para cadastros, confirmações e conexão demonstrativa. -->
+    <div
+      class="modal"
+      id="transactionModal"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="transactionTitle"
+    >
+      <form id="transactionForm">
+        <header>
+          <div>
+            <small>NOVO REGISTRO</small>
+            <h2 id="transactionTitle">Adicionar lançamento</h2>
+          </div>
+          <button type="button" class="modal-close">×</button>
+        </header>
+        <div class="type-toggle">
+          <button type="button" class="active" data-type="expense">
+            Despesa</button
+          ><button type="button" data-type="income">Receita</button>
+        </div>
+        <input type="hidden" id="transactionType" value="expense" /><label
+          >Descrição<input
+            id="descriptionInput"
+            placeholder="Ex.: Supermercado"
+            required
+        /></label>
+        <div class="field-row">
+          <label
+            >Valor (R$)<input
+              id="amountInput"
+              placeholder="0,00"
+              required /></label
+          ><label>Data<input id="dateInput" type="date" required /></label>
+        </div>
+        <div class="field-row">
+          <label
+            >Categoria<select id="formCategory">
+              <option>Alimentação</option>
+              <option>Moradia</option>
+              <option>Transporte</option>
+              <option>Lazer</option>
+              <option>Saúde</option>
+              <option>Educação</option>
+              <option>Salário</option>
+              <option>Freelance</option>
+              <option>Outros</option>
+            </select></label
+          ><label
+            >Conta<select id="formAccount">
+              <option value="Manual">Lançamento manual</option>
+            </select></label
+          >
+        </div>
+        <p class="form-error" id="formError"></p>
+        <footer>
+          <button type="button" class="secondary modal-close">Cancelar</button
+          ><button class="primary" type="submit">Salvar lançamento</button>
+        </footer>
       </form>
     </div>
-  </section>
-  <div class="app locked" id="appShell">
-    <aside class="sidebar" id="sidebar">
-      <div class="brand"><span class="logo">N</span><span>Nexo <b>Flow</b></span></div>
-      <nav aria-label="Navegação principal">
-        <button class="nav-btn active" data-view="dashboard"><span>⌂</span>Início</button>
-        <button class="nav-btn" data-view="transactions"><span>↕</span>Transações</button>
-        <button class="nav-btn" data-view="planning"><span>◎</span>Planejamento</button>
-        <button class="nav-btn" data-view="accounts"><span>▣</span>Contas e cartões</button>
-        <button class="nav-btn" data-view="ai"><span>✦</span>Nexo IA <i>Novo</i></button>
-      </nav>
-      <div class="side-spacer"></div>
-      <button class="open-finance-card connect-bank">
-        <span><strong>Conectar banco</strong><small id="bankCountLabel">Nenhuma instituição conectada</small></span>
-      </button>
-      <div class="user-card"><span class="avatar" id="userInitials">MC</span><span class="user-details"><strong id="userName">Marina Costa</strong><small id="userEmail">Plano Essencial</small></span><button id="logoutBtn" aria-label="Sair da conta" title="Sair da conta">→</button></div>
-    </aside>
 
-    <main id="main">
-      <header class="topbar">
-        <button class="mobile-menu" id="menuBtn" aria-label="Abrir menu">☰</button>
-        <div><small id="dateLabel">28 DE SETEMBRO DE 2026</small><h1 id="pageTitle">Olá, Marina 👋</h1></div>
-        <div class="top-actions">
-          <button class="icon-button" id="privacyBtn" aria-label="Ocultar valores" title="Ocultar valores">◉</button>
-          <button class="notification theme-toggle" id="themeBtn" aria-label="Ativar tema escuro" title="Ativar tema escuro">☾</button>
-          <button class="secondary connect-bank"><span>Conectar banco</span></button>
-          <button class="primary open-transaction">＋ <span class="hide-mobile">Novo lançamento</span></button>
+    <div
+      class="modal"
+      id="goalModal"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="goalTitle"
+    >
+      <form id="goalForm">
+        <header>
+          <div>
+            <small>NOVO COFRINHO</small>
+            <h2 id="goalTitle">Criar uma meta</h2>
+          </div>
+          <button type="button" class="goal-close">×</button>
+        </header>
+        <p class="modal-intro">
+          Defina um objetivo e acompanhe cada valor guardado.
+        </p>
+        <label
+          >Nome da meta<input
+            id="goalName"
+            placeholder="Ex.: Viagem de férias"
+            required
+        /></label>
+        <div class="field-row">
+          <label
+            >Objetivo (R$)<input
+              id="goalTarget"
+              inputmode="decimal"
+              placeholder="5.000,00"
+              required /></label
+          ><label
+            >Ícone<select id="goalIcon">
+              <option value="🐷">🐷 Cofrinho</option>
+              <option value="🛟">🛟 Reserva</option>
+              <option value="✈️">✈️ Viagem</option>
+              <option value="💻">💻 Tecnologia</option>
+              <option value="🏠">🏠 Casa</option>
+            </select></label
+          >
         </div>
-      </header>
+        <label
+          >Valor inicial (R$) — opcional<input
+            id="goalInitial"
+            inputmode="decimal"
+            placeholder="0,00"
+        /></label>
+        <p class="form-error" id="goalError"></p>
+        <footer>
+          <button type="button" class="secondary goal-close">Cancelar</button
+          ><button class="primary" type="submit">Criar cofrinho</button>
+        </footer>
+      </form>
+    </div>
 
-      <section class="view active" id="view-dashboard">
-        <div class="headline"><div><p>Visão consolidada das suas contas</p></div><div class="sync"><i></i>Sincronizado agora</div></div>
+    <div
+      class="modal"
+      id="depositModal"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="depositTitle"
+    >
+      <form id="depositForm">
+        <header>
+          <div>
+            <small>GUARDAR DINHEIRO</small>
+            <h2 id="depositTitle">Adicionar ao cofrinho</h2>
+          </div>
+          <button type="button" class="deposit-close">×</button>
+        </header>
+        <p class="modal-intro" id="depositGoalName"></p>
+        <label
+          >Valor para guardar (R$)<input
+            id="depositAmount"
+            inputmode="decimal"
+            placeholder="100,00"
+            required
+        /></label>
+        <p class="form-error" id="depositError"></p>
+        <footer>
+          <button type="button" class="secondary deposit-close">Cancelar</button
+          ><button class="primary" type="submit">Guardar valor</button>
+        </footer>
+      </form>
+    </div>
 
-        <div class="summary-grid">
-          <article class="balance-card">
-            <div class="balance-top"><span>Patrimônio disponível</span><button aria-label="Mais opções">•••</button></div>
-            <strong id="balanceValue" class="private-value">R$ 0,00</strong>
-            <div class="balance-change" id="balanceContext">Comece conectando um banco ou criando um lançamento</div>
-            <div class="balance-spark" aria-hidden="true"><i style="height:35%"></i><i style="height:48%"></i><i style="height:42%"></i><i style="height:66%"></i><i style="height:59%"></i><i style="height:83%"></i><i style="height:100%"></i></div>
-          </article>
-          <article class="stat-card"><div class="stat-head"><span class="stat-icon cyan">↙</span><span class="tag up" id="incomeTag">Sem dados</span></div><small>Receitas no mês</small><strong id="incomeValue" class="private-value">R$ 0,00</strong><p id="incomeContext">Nenhuma receita cadastrada</p></article>
-          <article class="stat-card"><div class="stat-head"><span class="stat-icon coral">↗</span><span class="tag down" id="expenseTag">Sem dados</span></div><small>Despesas no mês</small><strong id="expenseValue" class="private-value">R$ 0,00</strong><p id="expenseContext">Nenhuma despesa cadastrada</p></article>
-          <article class="stat-card"><div class="stat-head"><span class="stat-icon purple">◎</span><span class="tag up" id="savedTag">Início</span></div><small>Economizado</small><strong id="savedValue" class="private-value">R$ 0,00</strong><p id="savedContext">Seu saldo positivo aparece aqui</p></article>
+    <div
+      class="modal"
+      id="confirmModal"
+      hidden
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="confirmTitle"
+      aria-describedby="confirmText"
+    >
+      <div class="bank-modal-box confirm-box">
+        <div class="confirm-icon" aria-hidden="true">!</div>
+        <small>CONFIRMAÇÃO</small>
+        <h2 id="confirmTitle">Confirmar ação</h2>
+        <p id="confirmText">Revise esta ação antes de continuar.</p>
+        <footer>
+          <button type="button" class="secondary" id="confirmCancel">
+            Cancelar</button
+          ><button type="button" class="danger-button" id="confirmAction">
+            Confirmar
+          </button>
+        </footer>
+      </div>
+    </div>
+
+    <div
+      class="modal"
+      id="bankModal"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="bankTitle"
+    >
+      <div class="bank-modal-box">
+        <header>
+          <div>
+            <small>OPEN FINANCE</small>
+            <h2 id="bankTitle">Conectar uma instituição</h2>
+          </div>
+          <button class="bank-close">×</button>
+        </header>
+        <div class="steps">
+          <span class="active">1</span><i></i><span>2</span><i></i
+          ><span>3</span>
         </div>
-
-        <article class="ai-banner">
-          <div class="ai-orb"><span>✦</span></div>
-          <div><small>INSIGHT DA NEXO IA</small><h2 id="aiInsightTitle">Seu painel está pronto para começar</h2><p id="aiInsightText">Conecte um banco fictício para importar movimentações de demonstração.</p></div>
-          <button class="ai-action" data-view-link="ai">Ver análise completa <span>→</span></button>
-          <div class="ai-glow"></div>
-        </article>
-
-        <div class="content-grid">
-          <article class="panel cash-panel">
-            <div class="panel-title"><div><small>FLUXO FINANCEIRO</small><h2>Entradas e saídas</h2></div><select id="chartPeriod"><option value="6">Últimos 6 meses</option><option value="4">Últimos 4 meses</option></select></div>
-            <div class="chart-total"><strong id="chartTotal">R$ 0,00</strong><span><i class="purple-dot"></i>Receitas</span><span><i class="coral-dot"></i>Despesas</span></div>
-            <div class="chart" id="cashChart" role="img" aria-label="Comparação de receitas e despesas"></div>
-          </article>
-          <article class="panel spending-panel">
-            <div class="panel-title"><div><small>GASTOS</small><h2>Por categoria</h2></div><button class="link-btn" data-view-link="planning">Detalhes →</button></div>
-            <div class="donut-row"><div class="donut" id="spendingDonut"><span><strong id="spendingTotal">R$ 0,00</strong><small>Total gasto</small></span></div><div class="legend" id="spendingLegend"><p class="empty-inline">Sem despesas para classificar.</p></div></div>
-          </article>
+        <div class="bank-step active" data-step="1">
+          <p>Escolha seu banco para iniciar uma conexão demonstrativa.</p>
+          <label class="bank-search"
+            >⌕<input id="bankSearch" placeholder="Busque uma instituição"
+          /></label>
+          <div class="bank-options">
+            <button data-bank="Nubank">
+              <i class="bank-logo nu">Nu</i
+              ><span><strong>Nubank</strong><small>Conta e cartão</small></span
+              ><b>›</b></button
+            ><button data-bank="Banco Inter">
+              <i class="bank-logo bi">in</i
+              ><span
+                ><strong>Banco Inter</strong
+                ><small>Conta e investimentos</small></span
+              ><b>›</b></button
+            ><button data-bank="Itaú">
+              <i class="bank-logo it">it</i
+              ><span><strong>Itaú</strong><small>Conta e cartão</small></span
+              ><b>›</b></button
+            ><button data-bank="Santander">
+              <i class="bank-logo sa">S</i
+              ><span
+                ><strong>Santander</strong><small>Conta corrente</small></span
+              ><b>›</b>
+            </button>
+          </div>
         </div>
-
-        <div class="content-grid lower">
-          <article class="panel accounts-preview">
-            <div class="panel-title"><div><small>OPEN FINANCE</small><h2>Contas conectadas</h2></div><button class="link-btn connect-bank">Conectar banco</button></div>
-            <div class="bank-strip" id="bankStrip"><div class="empty-bank">Nenhum banco conectado.</div></div>
-            <div class="secure-note">▱ Seus dados são protegidos e você controla as permissões.</div>
-          </article>
-          <article class="panel upcoming-panel">
-            <div class="panel-title"><div><small>AGENDA</small><h2>Próximos pagamentos</h2></div><button class="calendar-chip">Setembro⌄</button></div>
-            <div class="upcoming-list" id="upcomingList"><div class="empty-bank">Nenhum pagamento importado.</div></div>
-          </article>
+        <div class="bank-step" data-step="2">
+          <div class="selected-bank">
+            <i id="selectedBankLogo">▦</i
+            ><span
+              ><small>Instituição selecionada</small
+              ><strong id="selectedBankName">Banco</strong></span
+            >
+          </div>
+          <h3>Você autoriza compartilhar:</h3>
+          <label class="permission-row"
+            ><span
+              >Saldo e dados da conta<small
+                >Para consolidar seu patrimônio</small
+              ></span
+            ><input type="checkbox" checked /></label
+          ><label class="permission-row"
+            ><span
+              >Transações dos últimos 12 meses<small
+                >Para classificar seus gastos</small
+              ></span
+            ><input type="checkbox" checked /></label
+          ><label class="permission-row"
+            ><span
+              >Cartões e faturas<small
+                >Para prever próximos pagamentos</small
+              ></span
+            ><input type="checkbox" checked
+          /></label>
+          <div class="consent-note">
+            🔒 Esta é apenas uma simulação. Nenhum dado real será acessado.
+          </div>
+          <button class="primary full" id="authorizeBank">
+            Autorizar e continuar
+          </button>
         </div>
-      </section>
-
-      <section class="view" id="view-transactions">
-        <div class="section-heading"><div><small>MOVIMENTAÇÕES</small><h2>Todas as transações</h2><p>Acompanhe cada entrada e saída em um só lugar.</p></div><button class="primary open-transaction">＋ Novo lançamento</button></div>
-        <div class="filter-bar"><label>⌕<input id="searchInput" type="search" placeholder="Buscar transação"></label><select id="typeFilter"><option value="all">Todos os tipos</option><option value="income">Receitas</option><option value="expense">Despesas</option></select><select id="categoryFilter"><option value="all">Todas as categorias</option></select><button class="secondary" id="exportBtn">⇩ Exportar CSV</button></div>
-        <article class="panel transaction-table"><table><thead><tr><th>Transação</th><th>Categoria</th><th>Data</th><th>Conta</th><th>Valor</th><th></th></tr></thead><tbody id="transactionRows"></tbody></table><div class="empty" id="emptyState" hidden>Nenhuma transação encontrada.</div></article>
-      </section>
-
-      <section class="view" id="view-planning">
-        <div class="section-heading"><div><small>PLANEJAMENTO</small><h2>Seu próximo capítulo</h2><p>Metas, limites e projeções para tomar decisões melhores.</p></div><button class="secondary open-goal">＋ Criar meta</button></div>
-        <div class="plan-grid">
-          <article class="forecast-card"><small>PROJEÇÃO NEXO</small><h2>Saldo previsto para dezembro</h2><strong class="private-value" id="forecastValue">R$ 0,00</strong><span id="forecastContext">Adicione movimentações para gerar uma projeção</span><div class="forecast-line"><i></i><b></b><em></em><span></span></div><div class="forecast-months"><span>SET</span><span>OUT</span><span>NOV</span><span>DEZ</span></div></article>
-          <article class="panel budget-list"><div class="panel-title"><div><small>LIMITES</small><h2>Orçamento do mês</h2></div><span id="budgetUsage">0% utilizado</span></div><div id="budgetList"></div></article>
-          <article class="panel goals"><div class="panel-title"><div><small>COFRINHOS</small><h2>Metas financeiras</h2></div><button class="link-btn open-goal">＋ Nova meta</button></div><p class="goals-help">Crie um objetivo e guarde valores aos poucos. O progresso fica salvo somente nesta conta.</p><div id="goalsList"></div></article>
+        <div class="bank-step success-step" data-step="3">
+          <div class="success-check">✓</div>
+          <h2>Conexão demonstrada!</h2>
+          <p id="successBankText">A instituição foi conectada ao painel.</p>
+          <button class="primary bank-close">Voltar ao painel</button>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <section class="view" id="view-accounts">
-        <div class="section-heading"><div><small>OPEN FINANCE</small><h2>Contas e cartões</h2><p>Uma visão unificada, mesmo usando bancos diferentes.</p></div><button class="primary connect-bank">Conectar instituição</button></div>
-        <div class="open-finance-hero"><div><span class="open-badge">OPEN FINANCE BRASIL</span><h2>Todos os seus bancos.<br>Uma única visão.</h2><p>Conecte instituições de forma segura e escolha exatamente quais informações deseja compartilhar.</p><button class="white-btn connect-bank">Conectar um novo banco</button></div><div class="orbit"><span class="orbit-center">N</span><i class="o1">Nu</i><i class="o2">in</i><i class="o3">it</i><i class="o4">+</i></div></div>
-        <div class="account-cards" id="accountCards"><div class="empty-accounts"><strong>Nenhuma instituição conectada</strong><span>Use a conexão demonstrativa para importar dados fictícios.</span></div></div>
-        <article class="panel permissions"><div><span class="shield">✓</span><div><h3>Você está no controle</h3><p>As conexões podem ser pausadas ou removidas a qualquer momento. Esta tela é uma simulação para apresentação acadêmica.</p></div></div><button class="secondary">Gerenciar permissões</button></article>
-      </section>
-
-      <section class="view" id="view-ai">
-        <div class="ai-page">
-          <div class="ai-sidebar"><div class="ai-logo">✦</div><h2>Nexo IA</h2><p>Sua assistente entende seus hábitos e transforma dados em decisões simples.</p><div class="suggestions"><button data-question="Onde estou gastando mais?">Onde estou gastando mais?</button><button data-question="Posso comprar um notebook?">Posso comprar um notebook?</button><button data-question="Como economizar R$ 500?">Como economizar R$ 500?</button></div><small>Respostas demonstrativas com base nos dados fictícios do painel.</small></div>
-          <div class="chat"><header><span class="ai-avatar">✦</span><div><strong>Nexo IA</strong><small><i></i> Pronta para ajudar</small></div><button>•••</button></header><div class="messages" id="messages"><div class="message ai-message"><span>✦</span><p>Olá, Marina! Analisei seu mês. Você está com uma boa margem, mas encontrei oportunidades de economizar sem mudar muito sua rotina. O que quer descobrir?</p></div></div><form id="chatForm"><input id="chatInput" placeholder="Pergunte sobre sua vida financeira..." autocomplete="off"><button aria-label="Enviar">↑</button></form></div>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <div class="modal" id="transactionModal" hidden role="dialog" aria-modal="true" aria-labelledby="transactionTitle"><form id="transactionForm"><header><div><small>NOVO REGISTRO</small><h2 id="transactionTitle">Adicionar lançamento</h2></div><button type="button" class="modal-close">×</button></header><div class="type-toggle"><button type="button" class="active" data-type="expense">Despesa</button><button type="button" data-type="income">Receita</button></div><input type="hidden" id="transactionType" value="expense"><label>Descrição<input id="descriptionInput" placeholder="Ex.: Supermercado" required></label><div class="field-row"><label>Valor (R$)<input id="amountInput" placeholder="0,00" required></label><label>Data<input id="dateInput" type="date" required></label></div><div class="field-row"><label>Categoria<select id="formCategory"><option>Alimentação</option><option>Moradia</option><option>Transporte</option><option>Lazer</option><option>Saúde</option><option>Educação</option><option>Salário</option><option>Freelance</option><option>Outros</option></select></label><label>Conta<select id="formAccount"><option value="Manual">Lançamento manual</option></select></label></div><p class="form-error" id="formError"></p><footer><button type="button" class="secondary modal-close">Cancelar</button><button class="primary" type="submit">Salvar lançamento</button></footer></form></div>
-
-  <div class="modal" id="goalModal" hidden role="dialog" aria-modal="true" aria-labelledby="goalTitle"><form id="goalForm"><header><div><small>NOVO COFRINHO</small><h2 id="goalTitle">Criar uma meta</h2></div><button type="button" class="goal-close">×</button></header><p class="modal-intro">Defina um objetivo e acompanhe cada valor guardado.</p><label>Nome da meta<input id="goalName" placeholder="Ex.: Viagem de férias" required></label><div class="field-row"><label>Objetivo (R$)<input id="goalTarget" inputmode="decimal" placeholder="5.000,00" required></label><label>Ícone<select id="goalIcon"><option value="🐷">🐷 Cofrinho</option><option value="🛟">🛟 Reserva</option><option value="✈️">✈️ Viagem</option><option value="💻">💻 Tecnologia</option><option value="🏠">🏠 Casa</option></select></label></div><label>Valor inicial (R$) — opcional<input id="goalInitial" inputmode="decimal" placeholder="0,00"></label><p class="form-error" id="goalError"></p><footer><button type="button" class="secondary goal-close">Cancelar</button><button class="primary" type="submit">Criar cofrinho</button></footer></form></div>
-
-  <div class="modal" id="depositModal" hidden role="dialog" aria-modal="true" aria-labelledby="depositTitle"><form id="depositForm"><header><div><small>GUARDAR DINHEIRO</small><h2 id="depositTitle">Adicionar ao cofrinho</h2></div><button type="button" class="deposit-close">×</button></header><p class="modal-intro" id="depositGoalName"></p><label>Valor para guardar (R$)<input id="depositAmount" inputmode="decimal" placeholder="100,00" required></label><p class="form-error" id="depositError"></p><footer><button type="button" class="secondary deposit-close">Cancelar</button><button class="primary" type="submit">Guardar valor</button></footer></form></div>
-
-  <div class="modal" id="confirmModal" hidden role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmText"><div class="bank-modal-box confirm-box"><div class="confirm-icon" aria-hidden="true">!</div><small>CONFIRMAÇÃO</small><h2 id="confirmTitle">Confirmar ação</h2><p id="confirmText">Revise esta ação antes de continuar.</p><footer><button type="button" class="secondary" id="confirmCancel">Cancelar</button><button type="button" class="danger-button" id="confirmAction">Confirmar</button></footer></div></div>
-
-  <div class="modal" id="bankModal" hidden role="dialog" aria-modal="true" aria-labelledby="bankTitle"><div class="bank-modal-box"><header><div><small>OPEN FINANCE</small><h2 id="bankTitle">Conectar uma instituição</h2></div><button class="bank-close">×</button></header><div class="steps"><span class="active">1</span><i></i><span>2</span><i></i><span>3</span></div><div class="bank-step active" data-step="1"><p>Escolha seu banco para iniciar uma conexão demonstrativa.</p><label class="bank-search">⌕<input id="bankSearch" placeholder="Busque uma instituição"></label><div class="bank-options"><button data-bank="Nubank"><i class="bank-logo nu">Nu</i><span><strong>Nubank</strong><small>Conta e cartão</small></span><b>›</b></button><button data-bank="Banco Inter"><i class="bank-logo bi">in</i><span><strong>Banco Inter</strong><small>Conta e investimentos</small></span><b>›</b></button><button data-bank="Itaú"><i class="bank-logo it">it</i><span><strong>Itaú</strong><small>Conta e cartão</small></span><b>›</b></button><button data-bank="Santander"><i class="bank-logo sa">S</i><span><strong>Santander</strong><small>Conta corrente</small></span><b>›</b></button></div></div><div class="bank-step" data-step="2"><div class="selected-bank"><i id="selectedBankLogo">▦</i><span><small>Instituição selecionada</small><strong id="selectedBankName">Banco</strong></span></div><h3>Você autoriza compartilhar:</h3><label class="permission-row"><span>Saldo e dados da conta<small>Para consolidar seu patrimônio</small></span><input type="checkbox" checked></label><label class="permission-row"><span>Transações dos últimos 12 meses<small>Para classificar seus gastos</small></span><input type="checkbox" checked></label><label class="permission-row"><span>Cartões e faturas<small>Para prever próximos pagamentos</small></span><input type="checkbox" checked></label><div class="consent-note">🔒 Esta é apenas uma simulação. Nenhum dado real será acessado.</div><button class="primary full" id="authorizeBank">Autorizar e continuar</button></div><div class="bank-step success-step" data-step="3"><div class="success-check">✓</div><h2>Conexão demonstrada!</h2><p id="successBankText">A instituição foi conectada ao painel.</p><button class="primary bank-close">Voltar ao painel</button></div></div></div>
-
-  <div class="toast" id="toast" role="status"><span>✓</span><div><strong>Ação concluída</strong><small>Os dados foram atualizados.</small></div><button id="undoBtn">Desfazer</button></div>
-  <script src="app.js"></script>
-</body>
+    <div class="toast" id="toast" role="status">
+      <span>✓</span>
+      <div>
+        <strong>Ação concluída</strong
+        ><small>Os dados foram atualizados.</small>
+      </div>
+      <button id="undoBtn">Desfazer</button>
+    </div>
+    <script src="app.js"></script>
+  </body>
 </html>
